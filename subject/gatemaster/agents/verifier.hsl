@@ -1,0 +1,98 @@
+// ============================================================================
+// gatemaster/agents/verifier.hsl — 修复验证器（确定性节点 + 签名词料耦合）
+// ============================================================================
+// 验证三闸：flaky 容忍重跑（L1 清洁重跑语境）∧ 补丁实质长度 ∧ 补丁 ∈
+// 签名词料已知补丁集。词料不可得（缺失/损坏/拒绝/形状错）→ StillFailing
+// （证据携带语料错误 → 走升级梯；工具失败不是补丁问题，重提案无意义）。
+// 文法覆盖：Option match / split_once 循环 / 嵌套 match / f64-free u32 比较
+// ============================================================================
+
+import { Build } from "../types/builds.hsl";
+import { VerifyEvent } from "../types/vocab.hsl";
+import { load_signatures } from "../tools/signatures.hsl";
+import { split_once } from "std/text";
+
+#[derive(Debug, Clone)]
+export struct Verifier {
+    gate: String,
+    min_patch: u32,
+}
+
+impl Verifier {
+    fn new(gate: String) -> Verifier {
+        Verifier { gate, min_patch: 15 }
+    }
+
+    /// 验证一个补丁：成立 → FixVerified；太薄（可修复）→ FixRejected；
+    /// 词料不可得或补丁未知（升梯）→ StillFailing。
+    /// flaky_pass：L1 清洁重跑语境下对 flaky 类失败的容忍（重跑即过）。
+    fn verify(self, build: Build, patch: String, kind: String, flaky_pass: bool) -> VerifyEvent {
+        // ---- flaky 容忍闸（L1 清洁重跑：测试抖动重跑即绿）----
+        if flaky_pass && kind == String::from("flaky") {
+            let summary = format!("[{}] flaky retry passed on clean rerun: {}", self.gate, build.id);
+            return VerifyEvent::FixVerified { summary };
+        }
+
+        // ---- 补丁厚度闸 ----
+        if patch.len() < self.min_patch {
+            let reason = format!("patch too thin: {} < {} chars", patch.len(), self.min_patch);
+            return VerifyEvent::FixRejected { reason };
+        }
+
+        // ---- 签名词料加载（故障注入面：fs.read）----
+        let corpus = load_signatures();
+        let known_raw = match corpus {
+            Ok(out) => {
+                if out.ok {
+                    out.body
+                } else {
+                    let evidence = format!("signatures unavailable: {}", out.error);
+                    return VerifyEvent::StillFailing { evidence };
+                }
+            },
+            Err(e) => {
+                let evidence = format!("signatures tool error: {}", e.message);
+                return VerifyEvent::StillFailing { evidence };
+            },
+        };
+
+        // ---- 词料已知补丁集（管道分隔）----
+        let mut known: Vec<String> = Vec::new();
+        let mut rest = known_raw.clone();
+        let mut guard: u32 = 0;
+        while rest.len() > 0 && guard < 64 {
+            let piece = split_once(rest.clone(), String::from("|"));
+            match piece {
+                Some(pair) => {
+                    let head = pair[0].clone();
+                    rest = pair[1].clone();
+                    if head.len() > 0 {
+                        known.push(head);
+                    }
+                },
+                None => {
+                    if rest.len() > 0 {
+                        known.push(rest.clone());
+                    }
+                    rest = String::from("");
+                },
+            }
+            guard += 1;
+        }
+
+        // ---- 词料命中闸 ----
+        let mut hit: bool = false;
+        for k in known.clone() {
+            if patch == k {
+                hit = true;
+            }
+        }
+        if hit {
+            let summary = format!("[{}] patch verified against signatures: {}", self.gate, patch);
+            VerifyEvent::FixVerified { summary }
+        } else {
+            let evidence = format!("patch not in known signatures: {}", patch);
+            VerifyEvent::StillFailing { evidence }
+        }
+    }
+}

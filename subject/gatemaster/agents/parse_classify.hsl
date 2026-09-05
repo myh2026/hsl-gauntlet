@@ -1,0 +1,51 @@
+// ============================================================================
+// gatemaster/agents/parse_classify.hsl — 分类协议解析（严格 JSON 协议 + 软硬漂移）
+// ============================================================================
+// 硬漂移（非法 JSON）→ Err → graph 侧归类进 ClassifyDrift 漂移通道；
+// 软漂移（合法 JSON 但缺 kind/suspects）→ ClassifyDrift；
+// 词表外 kind（合法 JSON 但未知类别）→ Unclassifiable（不可分类 → 直接 paging）。
+//
+// #L-22 修复后的直构通道版：native 体内用 $host.make 直接构造带运行时
+// __struct/__enum 标记的合法 HSL 值（ClassifyEvent / Result / HarnessError
+// 全族嵌套构造），零拍平协议。
+//
+// 文法覆盖：$host.make 结构体/命名变体/元组变体 / match 派发
+// ============================================================================
+
+import { ClassifyEvent } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 模型输出 → Result<ClassifyEvent, HarnessError>。
+/// 协议：恰好一个 JSON 对象，形如 {"kind": "compile|test|flaky|infra|dependency", "suspects": [".."]}。
+export fn parse_classify(raw: String) -> Result<ClassifyEvent, HarnessError> {
+    let parsed: Result<ClassifyEvent, HarnessError> = native typescript {
+        let parsed;
+        try {
+            parsed = $host.json.parse(raw);
+        } catch (e) {
+            return $host.make("Result::Err", [
+                $host.make("HarnessError", {
+                    kind: "protocol",
+                    message: "分类输出不是合法 JSON：" + String(e && e.message || e),
+                }),
+            ]);
+        }
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return $host.make("Result::Ok", [
+                $host.make("ClassifyEvent::ClassifyDrift", { note: "分类输出不是 JSON 对象（软漂移）" }),
+            ]);
+        }
+        const kind = String(parsed.kind ?? "");
+        const known = ["compile", "test", "flaky", "infra", "dependency"];
+        if (!known.includes(kind)) {
+            return $host.make("Result::Ok", [
+                $host.make("ClassifyEvent::Unclassifiable", { reason: "未知失败类别：" + (kind.length > 0 ? kind : "(empty)") }),
+            ]);
+        }
+        const suspects = Array.isArray(parsed.suspects) ? parsed.suspects.map((s) => String(s)) : [];
+        return $host.make("Result::Ok", [
+            $host.make("ClassifyEvent::FailureClassified", { kind, suspects }),
+        ]);
+    };
+    return parsed;
+}

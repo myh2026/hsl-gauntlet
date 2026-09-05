@@ -1,0 +1,10 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"BLD-004\", \"repo\": \"upload-service\", \"commit\": \"z9y8x7w\", \"log\": \"build failed see attach\"}"
+    ],
+    "logs": [],
+    "classify": [],
+    "fix": []
+  }
+}

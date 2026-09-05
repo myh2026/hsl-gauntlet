@@ -1,0 +1,14 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"BLD-003\", \"repo\": \"search-indexer\", \"commit\": \"9g8h7i6\", \"log\": \"test_flaky_retries [chrome] ... FAILED — passed on local rerun (retry 2/2) — suspected timing flake in retry queue\"}"
+    ],
+    "logs": [],
+    "classify": [
+      "{\"kind\": \"flaky\", \"suspects\": [\"tests/retry.test.ts\"]}"
+    ],
+    "fix": [
+      "{\"patch\": \"quarantine-flaky-suite-x\", \"rationale\": \"quarantine the flaky suite\"}"
+    ]
+  }
+}

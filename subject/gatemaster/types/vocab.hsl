@@ -1,0 +1,80 @@
+// ============================================================================
+// gatemaster/types/vocab.hsl — 边守卫词汇层（拓扑 19 条边的全部 Guard 枚举）
+// ============================================================================
+// 设计纪律（Gauntlet 唯一守卫纪律 unique-guard discipline，同 Vigil/Curator）：
+//   每条边的 Guard 变体名在整个 graph 内唯一 —— 事件总线按「变体名」匹配
+//   match 臂与 edge 声明（interp.traceEdgeFire），重名守卫会产生边发射别名，
+//   使 edge 覆盖率不可判定。本文件所有挂边变体名全局唯一，一一对应 19 条边。
+//
+// 与 Vigil / Curator 的拓扑对比（泛化实验的自变量）：
+//   Vigil：fan-out router 三路处置 + critic 审查回环（9n/17e/5 环）
+//   Curator：fan-in quarantine 五路汇聚 + 双修复回环（8n/16e/4 环）
+//   Gatemaster：escalation ladder 阶梯升级（L1 重跑→L2 bisect→L3 paging）
+//               + 双漂移自环 + 修复环 + 日志重取回环（8n/19e/6 环）
+// ============================================================================
+
+/// 日志闸词汇（log_gate 输出）—— 2 条边：
+///   log_gate -> classifier on LogComplete
+///   log_gate -> intake     on LogTruncated（日志重取回环）
+#[derive(Debug, Clone)]
+export enum LogEvent {
+    LogComplete { build: Build },
+    LogTruncated { build: Build, reason: String },
+}
+
+/// 失败分类词汇（classifier 输出）—— 3 条边：
+///   classifier -> fixer     on FailureClassified
+///   classifier -> classifier on ClassifyDrift（协议漂移自环）
+///   classifier -> escalator on Unclassifiable（无法分类 → 直接 paging）
+#[derive(Debug, Clone)]
+export enum ClassifyEvent {
+    FailureClassified { kind: String, suspects: Vec<String> },
+    ClassifyDrift { note: String },
+    Unclassifiable { reason: String },
+}
+
+/// 修复提案词汇（fixer 输出）—— 3 条边：
+///   fixer -> verifier  on FixProposed
+///   fixer -> fixer     on FixDrift（协议漂移自环）
+///   fixer -> escalator on NoFixPossible（模型放弃 → 直接 paging）
+#[derive(Debug, Clone)]
+export enum FixEvent {
+    FixProposed { patch: String, rationale: String },
+    FixDrift { note: String },
+    NoFixPossible { reason: String },
+}
+
+/// 验证词汇（verifier 输出）—— 3 条边：
+///   verifier -> ledger    on FixVerified（修复成立 → 落账）
+///   verifier -> fixer     on FixRejected（补丁太薄 → 修复回环）
+///   verifier -> escalator on StillFailing（补丁无效 → 升梯）
+#[derive(Debug, Clone)]
+export enum VerifyEvent {
+    FixVerified { summary: String },
+    FixRejected { reason: String },
+    StillFailing { evidence: String },
+}
+
+/// 升级阶梯词汇（escalator 输出）—— 4 条边：
+///   escalator -> verifier on L1CleanRerun（L1：清洁重跑 = flaky 容忍重验）
+///   escalator -> fixer    on L2Bisect（L2：bisect 证据回注修复）
+///   escalator -> ledger   on L3Paged（L3：人工升级）
+///   escalator -> ledger   on LadderExhausted（梯耗尽 → 放弃）
+#[derive(Debug, Clone)]
+export enum EscalateEvent {
+    L1CleanRerun { note: String },
+    L2Bisect { suspect: String },
+    L3Paged { oncall: String },
+    LadderExhausted { reason: String },
+}
+
+/// 预算信号词汇（budget 状态）—— 2 条边：
+///   budget -> escalator on AttemptsExhausted（修复预算耗尽 → 强制下梯）
+///   budget -> ledger    on DeadlineAlarm（会话死线 → 剩余批次放弃收束）
+/// Within 不挂边（无转移语义）。
+#[derive(Debug, Clone)]
+export enum BudgetSignal {
+    AttemptsExhausted,
+    DeadlineAlarm,
+    Within,
+}

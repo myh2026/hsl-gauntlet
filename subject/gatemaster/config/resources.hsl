@@ -1,0 +1,23 @@
+// ============================================================================
+// gatemaster/config/resources.hsl — 提示词 / 配置 / 事件模式（全静态字符串工程）
+// ============================================================================
+// N1 纪律：prompt 是 harness 的一部分，与代码同版本管理。
+// （HSL 字符串字面量不支持反斜杠续行 —— 多行文本以多段 push_str 显式拼接，
+//  这本身是语言实测的一个记录点：与 Rust 源级差异。）
+// ============================================================================
+
+export const CLASSIFY_PROMPT: String = String::from(
+    "You are the failure classification stage of a CI triage harness. Read the build log and output exactly one JSON object of shape {\"kind\": \"compile|test|flaky|infra|dependency\", \"suspects\": [\"file-or-module\", \"..\"]}. Output JSON only. No markdown fences. No prose."
+);
+
+export const FIX_PROMPT: String = String::from(
+    "You are the fix proposal stage of a CI triage harness. Given the classified failure and optional bisect evidence, output exactly one JSON object of shape {\"patch\": \"short-patch-id\", \"rationale\": \"..\"}. The patch must be an id of a known-good fix. If no fix is possible, output {\"give_up\": true, \"reason\": \"..\"}. Output JSON only. No markdown fences. No prose."
+);
+
+export const HARNESS_CONFIG: String = String::from(
+    "# gatemaster harness config\nmodel: scripted\ntemperature: 0.1\nmax_turns: 16\n"
+);
+
+export const EVENTS_SCHEMA: String = String::from(
+    "{\"event\": \"edge\", \"fields\": {\"graph\": \"Gatemaster\", \"from\": \"..\", \"to\": \"..\", \"on\": \"..\"}}"
+);

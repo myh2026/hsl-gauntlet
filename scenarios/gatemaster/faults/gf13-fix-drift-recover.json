@@ -1,0 +1,15 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"BLD-001\", \"repo\": \"checkout-service\", \"commit\": \"a1b2c3d\", \"log\": \"error[E0308]: mismatched types in src/api/handler.rs: expected usize, found String at line 42\"}"
+    ],
+    "logs": [],
+    "classify": [
+      "{\"kind\": \"compile\", \"suspects\": [\"src/api/handler.rs\"]}"
+    ],
+    "fix": [
+      "not json at all",
+      "{\"patch\": \"revert-last-commit\", \"rationale\": \"revert the type-mismatch commit\"}"
+    ]
+  }
+}

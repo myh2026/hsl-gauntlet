@@ -11,6 +11,7 @@ import type { ScenarioSpec, MutantSpec } from './types';
 import type { Invariant } from './invariants';
 import { vigilScenarios, vigilMutants, VIGIL_INVARIANTS } from '../subject/vigil/binding';
 import { curatorScenarios, curatorMutants, CURATOR_INVARIANTS } from '../subject/curator/binding';
+import { gatemasterScenarios, gatemasterMutants, GATEMASTER_INVARIANTS } from '../subject/gatemaster/binding';
 
 export interface SubjectSpec {
   /** 短 id（CLI --subject 过滤用） */
@@ -63,6 +64,19 @@ export const SUBJECTS: SubjectSpec[] = [
     invariants: CURATOR_INVARIANTS,
     mutants: curatorMutants,
     topoNote: '8 节点 / 16 边 / 4 守卫环 / fan-in quarantine 五路汇聚',
+  },
+  {
+    id: 'gatemaster',
+    name: 'Gatemaster',
+    domain: 'CI 失败分诊（CI failure triage）',
+    entry: 'subject/gatemaster/gatemaster.hsl',
+    subjectDir: 'subject/gatemaster',
+    entryFile: 'gatemaster.hsl',
+    dispositions: ['fixed', 'escalated', 'abandoned'],
+    scenarios: gatemasterScenarios,
+    invariants: GATEMASTER_INVARIANTS,
+    mutants: gatemasterMutants,
+    topoNote: '8 节点 / 19 边 / 6 守卫环 / escalation ladder 阶梯升级（L1 重跑→L2 bisect→L3 paging）',
   },
 ];
 

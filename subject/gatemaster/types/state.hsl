@@ -1,0 +1,138 @@
+// ============================================================================
+// gatemaster/types/state.hsl — 策略 / 预算 / 会话统计 / 会话状态 / 运行报告
+// ============================================================================
+// 文法覆盖：const 字面量族（十六进制/下划线/算术）/ turbofish parse::<T>() /
+//           HashMap 装配 / Option 链 / u32 计数 / 位运算
+// ============================================================================
+
+import { Message, CaseRecord } from "./builds.hsl";
+import { BudgetSignal } from "./vocab.hsl";
+import { HarnessError } from "./errors.hsl";
+
+export const DEFAULT_MAX_TURNS: u32 = 0x10;          // 16 —— 会话构建数预算（十六进制）
+export const DEFAULT_MAX_DRIFT: u32 = 1;             // 协议漂移预算（硬上限 = 2 倍）
+export const DEFAULT_MAX_CLASSIFY: u32 = 4;          // 分类重试上限（共 5 次模型调用）
+export const DEFAULT_MAX_REPAIRS: u32 = 2;           // 修复回环上限（补丁太薄重提案）
+export const DEFAULT_MAX_REFETCH: u32 = 2_000 / 1_000; // 日志重取上限（下划线 + 算术）
+
+/// 运行策略（CLI --flags 装配，经 $host.config 读取）。
+#[derive(Debug, Clone)]
+export struct Policy {
+    model: String,           // scripted | live
+    temperature: f64,
+    max_turns: u32,
+    max_drift: u32,
+    max_classify: u32,
+    max_repairs: u32,
+    max_refetch: u32,
+    workspace: String,
+    task: String,
+}
+
+impl Policy {
+    fn from_config() -> Result<Policy, HarnessError> {
+        let cfg: HashMap<String, String> = native typescript {
+            const c = $host.config;
+            const m = new Map();
+            m.set("model", String(c.model));
+            m.set("temperature", String(c.temperature));
+            m.set("max_turns", String(c.maxTurns));
+            m.set("workspace", String(c.workspace));
+            m.set("task", String(c.task));
+            return m;
+        };
+        let model = cfg.get("model").unwrap_or(String::from("scripted"));
+        let temperature = cfg.get("temperature").unwrap_or(String::from("0.1")).parse::<f64>()?;
+        let max_turns = cfg.get("max_turns").unwrap_or(String::from("24")).parse::<u32>()?;
+        let workspace = cfg.get("workspace").unwrap_or(String::from("."));
+        let task = cfg.get("task").unwrap_or(String::from(""));
+        Ok(Policy {
+            model,
+            temperature,
+            max_turns,
+            max_drift: DEFAULT_MAX_DRIFT,
+            max_classify: DEFAULT_MAX_CLASSIFY,
+            max_repairs: DEFAULT_MAX_REPAIRS,
+            max_refetch: DEFAULT_MAX_REFETCH,
+            workspace,
+            task,
+        })
+    }
+}
+
+/// 会话预算（在 graph 体内经 bump! 宏原地推进）。
+/// 双通道：builds_seen（死线：会话级构建数）/ repair_attempts（修复预算：会话级）
+///        / drift_count（协议漂移：会话级，L-9c 同款累计口径）。
+#[derive(Debug, Clone)]
+export struct Budget {
+    builds_seen: u32,
+    repair_attempts: u32,
+    drift_count: u32,
+}
+
+impl Budget {
+    fn zero() -> Budget {
+        Budget { builds_seen: 0, repair_attempts: 0, drift_count: 0 }
+    }
+
+    fn status(self, policy: Policy) -> BudgetSignal {
+        if self.builds_seen >= policy.max_turns {
+            BudgetSignal::DeadlineAlarm
+        } else if self.repair_attempts >= policy.max_repairs {
+            BudgetSignal::AttemptsExhausted
+        } else {
+            BudgetSignal::Within
+        }
+    }
+}
+
+/// 会话统计（产物 report.md 的数据面）。
+#[derive(Debug, Clone)]
+export struct SessionStats {
+    builds_seen: u32,
+    fixed: u32,
+    escalated: u32,
+    abandoned: u32,
+    classify_drifts: u32,
+    fix_drifts: u32,
+    refetches: u32,
+    repairs: u32,
+}
+
+impl SessionStats {
+    fn zero() -> SessionStats {
+        SessionStats {
+            builds_seen: 0,
+            fixed: 0,
+            escalated: 0,
+            abandoned: 0,
+            classify_drifts: 0,
+            fix_drifts: 0,
+            refetches: 0,
+            repairs: 0,
+        }
+    }
+}
+
+/// 会话状态（graph 主参数；mut 参数 + 字段级原地推进）。
+/// 预算不在此层：budget 是 graph 体内的 mut 节点（本地可变顶点状态）。
+#[derive(Debug, Clone)]
+export struct SessionState {
+    policy: Policy,
+    transcript: Vec<Message>,
+    stats: SessionStats,
+    batch: Vec<String>,      // 构建原始行（fixture batch 轨道加载）
+    build_idx: u32,          // 已拉取游标
+    attempts_noted: bool,    // AttemptsExhausted 提醒只注入一次
+}
+
+/// 运行报告（harness 出口产物）。
+#[derive(Debug, Clone)]
+export struct RunReport {
+    task: String,
+    verdict: String,         // batch-drained / deadline-break
+    cases: Vec<CaseRecord>,
+    stats: SessionStats,
+    transcript: Vec<Message>,
+    ok: bool,
+}

@@ -1,0 +1,104 @@
+// ============================================================================
+// gatemaster/agents/intake.hsl — 批次入口：fixture batch 轨道加载 + 构建解析 +
+// 拉取 + 日志重取（logs 轨道）
+// ============================================================================
+// 文法覆盖：while + 哨兵 / for-in 计数游标 / early return / Result 通道 /
+//           HashMap 工具 / unwrap_or 默认值 / 结构体整体重建
+// ============================================================================
+
+import { Build, BuildEvent } from "../types/builds.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 批次入口节点：加载并解析全部失败构建（fixture batch 轨道 = 环境脚本）。
+#[derive(Debug, Clone)]
+export struct BuildQueue {
+    builds: Vec<Build>,
+}
+
+impl BuildQueue {
+    fn new(lines: Vec<String>) -> Result<BuildQueue, HarnessError> {
+        let mut builds: Vec<Build> = Vec::new();
+        for line in lines {
+            builds.push(parse_build_line(line)?);
+        }
+        Ok(BuildQueue { builds })
+    }
+
+    /// 拉取第 idx 条构建（0 基游标，游标推进在 graph 体内经 bump! 完成）。
+    fn poll(self, idx: u32) -> BuildEvent {
+        let mut i: u32 = 0;
+        for b in self.builds.clone() {
+            if i == idx {
+                return BuildEvent::BuildReceived { build: b };
+            }
+            i += 1;
+        }
+        BuildEvent::BatchEmpty
+    }
+
+    /// 日志重取（log_gate -> intake on LogTruncated 的回环动作）：
+    /// 从 fixture logs 轨道取下一条完整日志；轨道耗尽 → 原构建原样返回
+    /// （保持截断状态 → 由 graph 侧重取预算收束）。
+    fn refetch_log(self, build: Build) -> Build {
+        let line: String = native typescript {
+            try {
+                return await $host.fixture.next("logs");
+            } catch (e) {
+                return "";
+            }
+        };
+        if line.len() == 0 {
+            build
+        } else {
+            Build {
+                id: build.id.clone(),
+                repo: build.repo.clone(),
+                commit: build.commit.clone(),
+                log: line,
+            }
+        }
+    }
+}
+
+/// 从 fixture batch 轨道逐条加载原始构建行（空串 = 轨道耗尽哨兵）。
+export fn load_batch() -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    let mut more: bool = true;
+    while more {
+        let line: String = native typescript {
+            try {
+                return await $host.fixture.next("batch");
+            } catch (e) {
+                return "";
+            }
+        };
+        if line.len() == 0 {
+            more = false;
+        } else {
+            lines.push(line);
+        }
+    }
+    lines
+}
+
+fn parse_build_line(line: String) -> Result<Build, HarnessError> {
+    let fields: HashMap<String, String> = native typescript {
+        try {
+            return $host.json.fields(line);
+        } catch (e) {
+            const m = new Map();
+            m.set("error", String(e && e.message || e));
+            return m;
+        }
+    };
+    if fields.contains_key("error") {
+        let detail = fields.get("error").unwrap_or(String::from("?"));
+        return Err(HarnessError::new(String::from("batch"), format!("构建行不是合法 JSON：{}", detail)));
+    }
+    Ok(Build {
+        id: fields.get("id").unwrap_or(String::from("unknown-id")),
+        repo: fields.get("repo").unwrap_or(String::from("unknown-repo")),
+        commit: fields.get("commit").unwrap_or(String::from("0000000")),
+        log: fields.get("log").unwrap_or(String::from("")),
+    })
+}

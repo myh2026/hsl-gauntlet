@@ -1,0 +1,31 @@
+// ============================================================================
+// gatemaster/agents/log_gate.hsl — 日志闸：构建日志完备性检查（确定性节点）
+// ============================================================================
+// 文法覆盖：impl 方法返回 enum / if-else 表达式 / String 方法链（len）
+// ============================================================================
+
+import { Build } from "../types/builds.hsl";
+import { LogEvent } from "../types/vocab.hsl";
+
+/// 日志闸节点：构建进入分类前的日志完备性门（纯 HSL，无模型、无工具 ——
+/// 截断是确定性的，不消耗模型轮次）。
+#[derive(Debug, Clone)]
+export struct LogGate {
+    min_log: u32,
+}
+
+impl LogGate {
+    fn new() -> LogGate {
+        LogGate { min_log: 40 }
+    }
+
+    /// 完备性检查：log 达到最小长度（CI 日志被截断 → 重取回环）。
+    fn check(self, build: Build) -> LogEvent {
+        if build.log.len() >= self.min_log {
+            LogEvent::LogComplete { build }
+        } else {
+            let reason = format!("log truncated: {} < {} chars", build.log.len(), self.min_log);
+            LogEvent::LogTruncated { build, reason }
+        }
+    }
+}

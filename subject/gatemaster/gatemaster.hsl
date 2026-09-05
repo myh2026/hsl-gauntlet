@@ -1,0 +1,617 @@
+// ============================================================================
+// gatemaster/gatemaster.hsl — 入口：Gatemaster 主编排 graph + main + 投射声明
+// ============================================================================
+// SUT #3 —— CI 失败分诊 harness（构建失败 → 日志闸 → 失败分类 → 修复提案 →
+// 签名验证 → 升级阶梯 L1 重跑 / L2 bisect / L3 paging，梯耗尽与死线放弃收束）。
+//
+// 拓扑（8 节点 / 19 边 / 6 环）—— 与 Vigil / Curator 的泛化对比自变量：
+//
+//   [intake] ──BuildReceived──► [log_gate]                    [classifier] ──ClassifyDrift──► [classifier]（自环）
+//   [log_gate] ──LogComplete──► [classifier]                  [classifier] ──FailureClassified──► [fixer]
+//   [log_gate] ──LogTruncated──► [intake]（日志重取回环）     [classifier] ──Unclassifiable──► [escalator]
+//   [fixer] ──FixProposed──► [verifier]                       [fixer] ──FixDrift──► [fixer]（自环）
+//   [fixer] ──NoFixPossible──► [escalator]                    [verifier] ──FixVerified──► [ledger]
+//   [verifier] ──FixRejected──► [fixer]（修复回环）           [verifier] ──StillFailing──► [escalator]
+//   [escalator] ──L1CleanRerun──► [verifier]（阶梯 L1）       [escalator] ──L2Bisect──► [fixer]（阶梯 L2）
+//   [escalator] ──L3Paged──► [ledger]（阶梯 L3）              [escalator] ──LadderExhausted──► [ledger]
+//   [budget] ──AttemptsExhausted──► [escalator]               [budget] ──DeadlineAlarm──► [ledger]
+//   [ledger] ──CaseDispatched──► [intake]（批次推进）
+//
+// Vigil：fan-out router 三路处置 + critic 审查回环（9n/17e/5 环）
+// Curator：fan-in quarantine 五路汇聚 + 双修复回环（8n/16e/4 环）
+// Gatemaster：escalation ladder 阶梯升级 + 双漂移自环 + 修复环 + 日志重取环
+//
+// 唯一守卫纪律：19 条边的 Guard 变体名全局唯一（见 types/vocab.hsl）。
+// 文法覆盖：graph mut 参数 / node mut / 条件边环 / AgentLoop 穷尽 match /
+//           macro_rules! bump / GraphName::run / project + scale
+// ============================================================================
+
+import { Build, Message, CaseRecord, BuildEvent, LedgerEvent } from "./types/builds.hsl";
+import { LogEvent, ClassifyEvent, FixEvent, VerifyEvent, EscalateEvent, BudgetSignal } from "./types/vocab.hsl";
+import { Policy, Budget, SessionState, SessionStats, RunReport } from "./types/state.hsl";
+import { HarnessError } from "./types/errors.hsl";
+import { ModelPort, make_port } from "./providers/model.hsl";
+import { BuildQueue, load_batch } from "./agents/intake.hsl";
+import { LogGate } from "./agents/log_gate.hsl";
+import { parse_classify } from "./agents/parse_classify.hsl";
+import { parse_fix } from "./agents/parse_fix.hsl";
+import { Verifier } from "./agents/verifier.hsl";
+import { Escalator } from "./agents/escalator.hsl";
+import { DispatchLedger } from "./agents/ledger.hsl";
+import { CLASSIFY_PROMPT, FIX_PROMPT, HARNESS_CONFIG, EVENTS_SCHEMA } from "./config/resources.hsl";
+
+macro_rules! bump {
+    ($field:expr, $by:expr) => { $field += $by; };
+}
+
+// ============================================================================
+// 消息装配（prompt 组装全部在 HSL 侧 —— N1 纪律）
+// ============================================================================
+
+fn classify_messages(build: Build) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(CLASSIFY_PROMPT));
+    msgs.push(Message::user(build.render()));
+    msgs
+}
+
+fn fix_messages(build: Build, kind: String, suspects: Vec<String>, bisect_hint: String) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(FIX_PROMPT));
+    let mut body = String::from("build ");
+    body.push_str(build.id.as_str());
+    body.push_str(" failed with kind=");
+    body.push_str(kind.as_str());
+    body.push_str("\nsuspects:\n");
+    for s in suspects {
+        body.push_str(format!("- {}\n", s).as_str());
+    }
+    if bisect_hint.len() > 0 {
+        body.push_str("\nbisect evidence (use this): ");
+        body.push_str(bisect_hint.as_str());
+    }
+    msgs.push(Message::user(body));
+    msgs
+}
+
+// ============================================================================
+// 主编排 graph：CI 失败分诊会话状态机（escalation ladder）
+// ============================================================================
+
+graph Gatemaster(mut state: SessionState) -> Result<RunReport, HarnessError> {
+    // ---- 8 节点（顶点 = 可执行单元；budget 为本地可变顶点）----
+    node intake: BuildQueue = BuildQueue::new(state.batch.clone())?;
+    node log_gate: LogGate = LogGate::new();
+    node classifier: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("classify"))?;
+    node fixer: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("fix"))?;
+    node verifier: Verifier = Verifier::new(String::from("signature-gate"));
+    node escalator: Escalator = Escalator::new(String::from("gatemaster-run"));
+    node ledger: DispatchLedger = DispatchLedger::new(String::from("gatemaster-run"));
+    node mut budget: Budget = Budget::zero();
+
+    // ---- 19 条边（Guard 变体全局唯一 —— Gauntlet 唯一守卫纪律）----
+    edge intake -> log_gate on BuildEvent::BuildReceived;
+    edge log_gate -> intake on LogEvent::LogTruncated;
+    edge log_gate -> classifier on LogEvent::LogComplete;
+    edge classifier -> classifier on ClassifyEvent::ClassifyDrift;
+    edge classifier -> fixer on ClassifyEvent::FailureClassified;
+    edge classifier -> escalator on ClassifyEvent::Unclassifiable;
+    edge fixer -> verifier on FixEvent::FixProposed;
+    edge fixer -> fixer on FixEvent::FixDrift;
+    edge fixer -> escalator on FixEvent::NoFixPossible;
+    edge verifier -> ledger on VerifyEvent::FixVerified;
+    edge verifier -> fixer on VerifyEvent::FixRejected;
+    edge verifier -> escalator on VerifyEvent::StillFailing;
+    edge escalator -> verifier on EscalateEvent::L1CleanRerun;
+    edge escalator -> fixer on EscalateEvent::L2Bisect;
+    edge escalator -> ledger on EscalateEvent::L3Paged;
+    edge escalator -> ledger on EscalateEvent::LadderExhausted;
+    edge budget -> escalator on BudgetSignal::AttemptsExhausted;
+    edge budget -> ledger on BudgetSignal::DeadlineAlarm;
+    edge ledger -> intake on LedgerEvent::CaseDispatched;
+
+    let mut cases: Vec<CaseRecord> = Vec::new();
+    let mut session_verdict: String = String::from("batch-drained");
+
+    // ---- AgentLoop：外层 = 批次构建拉取回环 ----
+    loop {
+        // 预算闸门（budget -> ledger on DeadlineAlarm / budget -> escalator on AttemptsExhausted）
+        match budget.clone().status(state.policy.clone()) {
+            BudgetSignal::DeadlineAlarm => {
+                let remaining = state.batch.len() - state.build_idx;
+                let case = CaseRecord {
+                    build_id: String::from("(batch)"),
+                    disposition: String::from("abandoned"),
+                    detail: format!("deadline alarm with {} build(s) abandoned", remaining),
+                };
+                let receipt = match ledger.clone().dispatch(case.clone()) {
+                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                };
+                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                bump!(state.stats.abandoned, 1);
+                session_verdict = String::from("deadline-break");
+                break;
+            },
+            BudgetSignal::AttemptsExhausted => {
+                if state.attempts_noted == false {
+                    state.transcript.push(Message::system(String::from("[budget] 修复预算耗尽：后续构建将由修复环顶闸直接放弃收束")));
+                    state.attempts_noted = true;
+                }
+            },
+            BudgetSignal::Within => {},
+        }
+
+        // 批次拉取（intake -> log_gate on BuildReceived）
+        match intake.clone().poll(state.build_idx) {
+            BuildEvent::BuildReceived { build } => {
+                bump!(state.stats.builds_seen, 1);
+                bump!(budget.builds_seen, 1);
+                state.transcript.push(Message::user(build.clone().render()));
+
+                // ---- 日志闸（LogTruncated 重取回环 / LogComplete 直进分类）----
+                let mut current: Build = build;
+                let mut log_ok: bool = false;
+                let mut refetches: u32 = 0;
+                while !log_ok && refetches <= state.policy.max_refetch {
+                    match log_gate.clone().check(current.clone()) {
+                        LogEvent::LogComplete { build: b } => {
+                            current = b;
+                            log_ok = true;
+                        },
+                        LogEvent::LogTruncated { build: b, reason } => {
+                            // log_gate -> intake on LogTruncated（日志重取回环）
+                            state.transcript.push(Message::tool(format!("[log_gate] {}", reason)));
+                            current = intake.clone().refetch_log(b);
+                            bump!(state.stats.refetches, 1);
+                            refetches += 1;
+                        },
+                    }
+                }
+
+                if log_ok {
+                    // ---- 分类环（ClassifyDrift 自环 + Unclassifiable 直接 paging）----
+                    let mut kind: String = String::from("");
+                    let mut suspects: Vec<String> = Vec::new();
+                    let mut class_ok: bool = false;
+                    let mut class_dead: String = String::from("");
+                    let mut class_attempts: u32 = 0;
+                    while !class_ok && class_dead.len() == 0 && class_attempts <= state.policy.max_classify {
+                        let class_raw = classifier.clone().act(classify_messages(current.clone())).await?;
+                        state.transcript.push(Message::assistant(class_raw.clone()));
+                        let cev = match parse_classify(class_raw) {
+                            Ok(e) => e,
+                            Err(e) => ClassifyEvent::ClassifyDrift { note: e.message },
+                        };
+                        match cev {
+                            ClassifyEvent::FailureClassified { kind: k, suspects: s } => {
+                                kind = k;
+                                suspects = s;
+                                class_ok = true;
+                            },
+                            ClassifyEvent::ClassifyDrift { note } => {
+                                // 协议漂移自环（classifier -> classifier on ClassifyDrift）
+                                bump!(budget.drift_count, 1);
+                                bump!(state.stats.classify_drifts, 1);
+                                if budget.drift_count >= state.policy.max_drift * 2 {
+                                    class_dead = format!("classify protocol drift exhausted: {}", note);
+                                } else {
+                                    state.transcript.push(Message::user(String::from("你的上一条输出违反了协议。请重新输出恰好一个 JSON 对象（kind + suspects 数组）。")));
+                                }
+                            },
+                            ClassifyEvent::Unclassifiable { reason } => {
+                                class_dead = reason;
+                            },
+                        }
+                        class_attempts += 1;
+                    }
+
+                    if class_dead.len() > 0 {
+                        // classifier -> escalator on Unclassifiable（无法分类/漂移硬上限 → 直接 paging）
+                        let pev = escalator.clone().page_direct(class_dead.clone());
+                        match pev {
+                            EscalateEvent::L1CleanRerun { note: _n } => {},
+                            EscalateEvent::L2Bisect { suspect: _s } => {},
+                            EscalateEvent::L3Paged { oncall } => {
+                                // escalator -> ledger on L3Paged（人工升级终态）
+                                let case = CaseRecord {
+                                    build_id: current.id.clone(),
+                                    disposition: String::from("escalated"),
+                                    detail: format!("paged {}", oncall),
+                                };
+                                let receipt = match ledger.clone().dispatch(case.clone()) {
+                                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                                };
+                                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                bump!(state.stats.escalated, 1);
+                            },
+                            EscalateEvent::LadderExhausted { reason: _r } => {},
+                        }
+                    } else {
+                        // ---- 修复-验证-升级环（FixProposed / FixRejected 修复回环 / 阶梯 L1-L3）----
+                        let mut terminal: bool = false;
+                        let mut flaky_pass: bool = false;
+                        let mut bisect_hint: String = String::from("");
+                        let mut last_patch: String = String::from("");
+                        let mut mode: String = String::from("fix");
+                        let mut ladder_level: u32 = 1;
+                        while !terminal {
+                            // 修复环顶闸（budget -> escalator on AttemptsExhausted → 强制下梯）
+                            match budget.clone().status(state.policy.clone()) {
+                                BudgetSignal::AttemptsExhausted => {
+                                    let fe = escalator.clone().force_exhaust(format!("repair budget exhausted after {} repairs", state.stats.repairs));
+                                    match fe {
+                                        EscalateEvent::L1CleanRerun { note: _n } => {},
+                                        EscalateEvent::L2Bisect { suspect: _s } => {},
+                                        EscalateEvent::L3Paged { oncall: _o } => {},
+                                        EscalateEvent::LadderExhausted { reason } => {
+                                            // escalator -> ledger on LadderExhausted（梯耗尽 → 放弃）
+                                            let case = CaseRecord {
+                                                build_id: current.id.clone(),
+                                                disposition: String::from("abandoned"),
+                                                detail: format!("ladder exhausted: {}", reason),
+                                            };
+                                            let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                LedgerEvent::CaseDispatched { receipt } => receipt,
+                                            };
+                                            cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                            bump!(state.stats.abandoned, 1);
+                                            terminal = true;
+                                        },
+                                    }
+                                },
+                                BudgetSignal::DeadlineAlarm => {
+                                    // 案中死线（外层拉取已消耗预算）→ 放弃当前构建收束
+                                    let case = CaseRecord {
+                                        build_id: current.id.clone(),
+                                        disposition: String::from("abandoned"),
+                                        detail: String::from("deadline hit mid-case"),
+                                    };
+                                    let receipt = match ledger.clone().dispatch(case.clone()) {
+                                        LedgerEvent::CaseDispatched { receipt } => receipt,
+                                    };
+                                    cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                    bump!(state.stats.abandoned, 1);
+                                    terminal = true;
+                                },
+                                BudgetSignal::Within => {},
+                            }
+                            if terminal {
+                                break;
+                            }
+
+                            if mode == String::from("rerun") {
+                                // L1 清洁重跑（escalator -> verifier on L1CleanRerun 已发射）：同补丁重验
+                                let rv = verifier.clone().verify(current.clone(), last_patch.clone(), kind.clone(), true);
+                                match rv {
+                                    VerifyEvent::FixVerified { summary } => {
+                                        // verifier -> ledger on FixVerified（修复成立 → 落账）
+                                        let case = CaseRecord {
+                                            build_id: current.id.clone(),
+                                            disposition: String::from("fixed"),
+                                            detail: summary,
+                                        };
+                                        let receipt = match ledger.clone().dispatch(case.clone()) {
+                                            LedgerEvent::CaseDispatched { receipt } => receipt,
+                                        };
+                                        cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                        bump!(state.stats.fixed, 1);
+                                        terminal = true;
+                                    },
+                                    VerifyEvent::FixRejected { reason } => {
+                                        // verifier -> fixer on FixRejected（修复回环）
+                                        bump!(state.stats.repairs, 1);
+                                        bump!(budget.repair_attempts, 1);
+                                        state.transcript.push(Message::tool(format!("[verifier] 补丁太薄：{}", reason)));
+                                        mode = String::from("fix");
+                                    },
+                                    VerifyEvent::StillFailing { evidence: _e } => {
+                                        // verifier -> escalator on StillFailing（升梯一步）
+                                        let lev = escalator.clone().step(ladder_level, suspects.clone());
+                                        match lev {
+                                            EscalateEvent::L1CleanRerun { note: _n } => {
+                                                // escalator -> verifier on L1CleanRerun（清洁重跑）
+                                                flaky_pass = true;
+                                                ladder_level += 1;
+                                                mode = String::from("rerun");
+                                            },
+                                            EscalateEvent::L2Bisect { suspect } => {
+                                                // escalator -> fixer on L2Bisect（bisect 证据回注修复）
+                                                bisect_hint = format!("bisect blames {}", suspect);
+                                                ladder_level += 1;
+                                                mode = String::from("fix");
+                                            },
+                                            EscalateEvent::L3Paged { oncall } => {
+                                                // escalator -> ledger on L3Paged（人工升级终态）
+                                                let case = CaseRecord {
+                                                    build_id: current.id.clone(),
+                                                    disposition: String::from("escalated"),
+                                                    detail: format!("paged {}", oncall),
+                                                };
+                                                let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                };
+                                                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                bump!(state.stats.escalated, 1);
+                                                terminal = true;
+                                            },
+                                            EscalateEvent::LadderExhausted { reason } => {
+                                                // escalator -> ledger on LadderExhausted（终态放弃）
+                                                let case = CaseRecord {
+                                                    build_id: current.id.clone(),
+                                                    disposition: String::from("abandoned"),
+                                                    detail: format!("ladder exhausted: {}", reason),
+                                                };
+                                                let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                };
+                                                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                bump!(state.stats.abandoned, 1);
+                                                terminal = true;
+                                            },
+                                        }
+                                    },
+                                }
+                            } else {
+                                // fix 模式：修复提案（fixer -> verifier / fixer / escalator）
+                                let fix_raw = fixer.clone().act(fix_messages(current.clone(), kind.clone(), suspects.clone(), bisect_hint.clone())).await?;
+                                state.transcript.push(Message::assistant(fix_raw.clone()));
+                                let fev = match parse_fix(fix_raw) {
+                                    Ok(e) => e,
+                                    Err(e) => FixEvent::FixDrift { note: e.message },
+                                };
+                                match fev {
+                                    FixEvent::FixProposed { patch, rationale: _r } => {
+                                        // fixer -> verifier on FixProposed（提案验证）
+                                        last_patch = patch.clone();
+                                        let rv = verifier.clone().verify(current.clone(), patch.clone(), kind.clone(), flaky_pass);
+                                        match rv {
+                                            VerifyEvent::FixVerified { summary } => {
+                                                // verifier -> ledger on FixVerified（修复成立 → 落账）
+                                                let case = CaseRecord {
+                                                    build_id: current.id.clone(),
+                                                    disposition: String::from("fixed"),
+                                                    detail: summary,
+                                                };
+                                                let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                };
+                                                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                bump!(state.stats.fixed, 1);
+                                                terminal = true;
+                                            },
+                                            VerifyEvent::FixRejected { reason } => {
+                                                // verifier -> fixer on FixRejected（修复回环：重提案）
+                                                bump!(state.stats.repairs, 1);
+                                                bump!(budget.repair_attempts, 1);
+                                                state.transcript.push(Message::tool(format!("[verifier] 修复回环：{}", reason)));
+                                            },
+                                            VerifyEvent::StillFailing { evidence: _e } => {
+                                                // verifier -> escalator on StillFailing（升梯一步）
+                                                let lev = escalator.clone().step(ladder_level, suspects.clone());
+                                                match lev {
+                                                    EscalateEvent::L1CleanRerun { note: _n } => {
+                                                        // escalator -> verifier on L1CleanRerun（清洁重跑）
+                                                        flaky_pass = true;
+                                                        ladder_level += 1;
+                                                        mode = String::from("rerun");
+                                                    },
+                                                    EscalateEvent::L2Bisect { suspect } => {
+                                                        // escalator -> fixer on L2Bisect（bisect 证据回注修复）
+                                                        bisect_hint = format!("bisect blames {}", suspect);
+                                                        ladder_level += 1;
+                                                        mode = String::from("fix");
+                                                    },
+                                                    EscalateEvent::L3Paged { oncall } => {
+                                                        // escalator -> ledger on L3Paged（人工升级终态）
+                                                        let case = CaseRecord {
+                                                            build_id: current.id.clone(),
+                                                            disposition: String::from("escalated"),
+                                                            detail: format!("paged {}", oncall),
+                                                        };
+                                                        let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                            LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                        };
+                                                        cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                        bump!(state.stats.escalated, 1);
+                                                        terminal = true;
+                                                    },
+                                                    EscalateEvent::LadderExhausted { reason } => {
+                                                        // escalator -> ledger on LadderExhausted（终态放弃）
+                                                        let case = CaseRecord {
+                                                            build_id: current.id.clone(),
+                                                            disposition: String::from("abandoned"),
+                                                            detail: format!("ladder exhausted: {}", reason),
+                                                        };
+                                                        let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                            LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                        };
+                                                        cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                        bump!(state.stats.abandoned, 1);
+                                                        terminal = true;
+                                                    },
+                                                }
+                                            },
+                                        }
+                                    },
+                                    FixEvent::FixDrift { note } => {
+                                        // 协议漂移自环（fixer -> fixer on FixDrift）
+                                        bump!(budget.drift_count, 1);
+                                        bump!(state.stats.fix_drifts, 1);
+                                        if budget.drift_count >= state.policy.max_drift * 2 {
+                                            // 漂移硬上限 → 模型放弃 → 直接 paging
+                                            let pev = escalator.clone().page_direct(format!("fix protocol drift exhausted: {}", note));
+                                            match pev {
+                                                EscalateEvent::L1CleanRerun { note: _n } => {},
+                                                EscalateEvent::L2Bisect { suspect: _s } => {},
+                                                EscalateEvent::L3Paged { oncall } => {
+                                                    let case = CaseRecord {
+                                                        build_id: current.id.clone(),
+                                                        disposition: String::from("escalated"),
+                                                        detail: format!("paged {}", oncall),
+                                                    };
+                                                    let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                        LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                    };
+                                                    cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                    bump!(state.stats.escalated, 1);
+                                                    terminal = true;
+                                                },
+                                                EscalateEvent::LadderExhausted { reason: _r } => {},
+                                            }
+                                        } else {
+                                            state.transcript.push(Message::user(String::from("你的上一条输出违反了协议。请重新输出恰好一个 JSON 对象（patch + rationale 或 give_up）。")));
+                                        }
+                                    },
+                                    FixEvent::NoFixPossible { reason } => {
+                                        // fixer -> escalator on NoFixPossible（模型放弃 → 直接 paging）
+                                        let pev = escalator.clone().page_direct(reason);
+                                        match pev {
+                                            EscalateEvent::L1CleanRerun { note: _n } => {},
+                                            EscalateEvent::L2Bisect { suspect: _s } => {},
+                                            EscalateEvent::L3Paged { oncall } => {
+                                                // escalator -> ledger on L3Paged（人工升级终态）
+                                                let case = CaseRecord {
+                                                    build_id: current.id.clone(),
+                                                    disposition: String::from("escalated"),
+                                                    detail: format!("paged {}", oncall),
+                                                };
+                                                let receipt = match ledger.clone().dispatch(case.clone()) {
+                                                    LedgerEvent::CaseDispatched { receipt } => receipt,
+                                                };
+                                                cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                                                bump!(state.stats.escalated, 1);
+                                                terminal = true;
+                                            },
+                                            EscalateEvent::LadderExhausted { reason: _r } => {},
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // 重取预算耗尽 → 强制下梯（escalator -> ledger on LadderExhausted）
+                    let fe = escalator.clone().force_exhaust(String::from("log refetch budget exhausted"));
+                    match fe {
+                        EscalateEvent::L1CleanRerun { note: _n } => {},
+                        EscalateEvent::L2Bisect { suspect: _s } => {},
+                        EscalateEvent::L3Paged { oncall: _o } => {},
+                        EscalateEvent::LadderExhausted { reason } => {
+                            let case = CaseRecord {
+                                build_id: current.id.clone(),
+                                disposition: String::from("abandoned"),
+                                detail: format!("ladder exhausted: {}", reason),
+                            };
+                            let receipt = match ledger.clone().dispatch(case.clone()) {
+                                LedgerEvent::CaseDispatched { receipt } => receipt,
+                            };
+                            cases.push(CaseRecord { build_id: case.build_id.clone(), disposition: case.disposition.clone(), detail: receipt });
+                            bump!(state.stats.abandoned, 1);
+                        },
+                    }
+                }
+                bump!(state.build_idx, 1);
+            },
+            BuildEvent::BatchEmpty => {
+                break;
+            },
+        }
+    }
+
+    let ok = session_verdict == String::from("batch-drained");
+    Ok(RunReport {
+        task: state.policy.task.clone(),
+        verdict: session_verdict,
+        cases: cases.clone(),
+        stats: state.stats.clone(),
+        transcript: state.transcript.clone(),
+        ok,
+    })
+}
+
+// ============================================================================
+// 入口与产物
+// ============================================================================
+
+export fn main() -> Result<(), HarnessError> {
+    let policy = Policy::from_config()?;
+    let mut opening: Vec<Message> = Vec::new();
+    opening.push(Message::system(String::from("Gatemaster session opening")));
+    opening.push(Message::user(format!("workspace: {}\ndirective: {}", policy.workspace, policy.task)));
+    let state = SessionState {
+        policy: policy.clone(),
+        transcript: opening,
+        stats: SessionStats::zero(),
+        batch: load_batch(),
+        build_idx: 0,
+        attempts_noted: false,
+    };
+    let report = Gatemaster::run(state)?;
+    write_artifacts(report, policy)
+}
+
+fn write_artifacts(report: RunReport, policy: Policy) -> Result<(), HarnessError> {
+    let report_md = render_report(report.clone(), policy);
+    let transcript_jsonl: String = native typescript {
+        const lines = report.transcript.map((m) => JSON.stringify({ role: m.role, content: m.content }));
+        return lines.join("\n") + "\n";
+    };
+    let cases_jsonl: String = native typescript {
+        const lines = report.cases.map((c) => JSON.stringify({ build_id: c.build_id, disposition: c.disposition, detail: c.detail }));
+        return lines.join("\n") + "\n";
+    };
+    native typescript {
+        $host.artifacts.write("report.md", report_md);
+        $host.artifacts.write("transcript.jsonl", transcript_jsonl);
+        $host.artifacts.write("cases.jsonl", cases_jsonl);
+        return true;
+    };
+    println!("[gatemaster] artifacts written: report.md / transcript.jsonl / cases.jsonl");
+    Ok(())
+}
+
+fn render_report(report: RunReport, policy: Policy) -> String {
+    let mut out = String::from("# Gatemaster Run Report\n\n");
+    out.push_str("## 任务\n\n");
+    out.push_str(policy.task.as_str());
+    out.push_str("\n\n## 结果\n\n");
+    out.push_str(format!("- verdict: {}\n", report.verdict).as_str());
+    out.push_str(format!("- ok: {}\n", report.ok).as_str());
+    out.push_str("\n## 会话统计\n\n");
+    out.push_str(format!("- builds_seen: {}\n", report.stats.builds_seen).as_str());
+    out.push_str(format!("- fixed: {}\n", report.stats.fixed).as_str());
+    out.push_str(format!("- escalated: {}\n", report.stats.escalated).as_str());
+    out.push_str(format!("- abandoned: {}\n", report.stats.abandoned).as_str());
+    out.push_str(format!("- classify_drifts: {}\n", report.stats.classify_drifts).as_str());
+    out.push_str(format!("- fix_drifts: {}\n", report.stats.fix_drifts).as_str());
+    out.push_str(format!("- refetches: {}\n", report.stats.refetches).as_str());
+    out.push_str(format!("- repairs: {}\n", report.stats.repairs).as_str());
+    out.push_str("\n## 处置案例\n\n");
+    for c in report.cases {
+        out.push_str("- ");
+        out.push_str(c.build_id.as_str());
+        out.push_str(" -> ");
+        out.push_str(c.disposition.as_str());
+        out.push_str(" (");
+        out.push_str(c.detail.as_str());
+        out.push_str(")\n");
+    }
+    out
+}
+
+scale = microkernel;
+
+project {
+    Gatemaster      -> "src/gatemaster/main.py"     : python,
+    Verifier        -> "src/gatemaster/verifier.py" : python,
+    CLASSIFY_PROMPT -> ".harness/CLASSIFY.md"       : markdown,
+    FIX_PROMPT      -> ".harness/FIX.md"            : markdown,
+    HARNESS_CONFIG  -> "config/harness.yml"         : yaml,
+    EVENTS_SCHEMA   -> "config/events.schema.json"  : json,
+
+    rules {
+        struct -> "src/types/{name}.py" : python,
+        enum   -> "src/vocab/{name}.py" : python,
+        fn     -> "src/logic/{name}.py" : python,
+    }
+}

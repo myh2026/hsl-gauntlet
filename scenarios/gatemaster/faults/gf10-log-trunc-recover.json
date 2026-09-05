@@ -1,0 +1,16 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"BLD-004\", \"repo\": \"upload-service\", \"commit\": \"z9y8x7w\", \"log\": \"build failed see attach\"}"
+    ],
+    "logs": [
+      "error TS2345: argument of type string is not assignable to parameter of type number in src/cli/args.ts at line 17"
+    ],
+    "classify": [
+      "{\"kind\": \"compile\", \"suspects\": [\"src/cli/args.ts\"]}"
+    ],
+    "fix": [
+      "{\"patch\": \"revert-last-commit\", \"rationale\": \"revert the args change\"}"
+    ]
+  }
+}

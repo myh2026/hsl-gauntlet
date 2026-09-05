@@ -1,0 +1,53 @@
+// ============================================================================
+// gatemaster/tools/signatures.hsl — 签名词料查询工具（fs 路径监狱 + 软硬降级）
+// ============================================================================
+// 故障注入面（对应 F3/F4/F5/F12）：fs.read ——
+//   语料文件缺失（error）→ ok=false（硬降级 → StillFailing → 升梯）
+//   读取损坏（corrupt 截断）→ ok=false
+//   能力拒绝（deny）→ ok=false + capability_denied 事件
+//   字段形状损坏（真实文件错型）→ 软降级：回退内建已知补丁集（gf12）
+// 文法覆盖：#[capability(file_read)] / native try-catch 结构化结果 / String 判等
+// ============================================================================
+
+import { HarnessError } from "../types/errors.hsl";
+
+/// 工具输出（ok=false 携带错误语义而非抛错 —— 失败是值，不是异常）。
+#[derive(Debug, Clone)]
+export struct ToolOutput {
+    ok: bool,
+    body: String,
+    error: String,
+    ms: u64,
+}
+
+/// 内建已知补丁集（软降级回退口径 —— 与 signatures.json 的 known_patches 同基线）。
+export fn builtin_patches() -> String {
+    String::from("bump-cache-and-retry|pin-dependency-version|revert-last-commit")
+}
+
+/// 查询签名词料：读 workspace 下的 signatures.json，渲染已知补丁集（管道分隔）。
+#[capability(file_read)]
+export fn load_signatures() -> Result<ToolOutput, HarnessError> {
+    let r = native typescript {
+        const t0 = Date.now();
+        try {
+            const raw = await $host.fs.read("signatures.json");
+            const parsed = $host.json.parse(raw);
+            // 字段形状软降级：known_patches 期望数组，得到字符串/缺失 → 回退内建集
+            let patches;
+            if (Array.isArray(parsed.known_patches) && parsed.known_patches.length > 0) {
+                patches = parsed.known_patches.join("|");
+            } else {
+                patches = "bump-cache-and-retry|pin-dependency-version|revert-last-commit";
+            }
+            return { ok: true, body: patches, error: "", ms: Date.now() - t0 };
+        } catch (e) {
+            return { ok: false, body: "", error: String(e && e.message || e), ms: Date.now() - t0 };
+        }
+    };
+    if r.ok {
+        Ok(ToolOutput { ok: true, body: r.body, error: String::from(""), ms: r.ms })
+    } else {
+        Ok(ToolOutput { ok: false, body: String::from(""), error: r.error, ms: r.ms })
+    }
+}

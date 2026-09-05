@@ -1,0 +1,56 @@
+// ============================================================================
+// gatemaster/agents/escalator.hsl — 升级阶梯节点（escalation ladder）
+// ============================================================================
+// 阶梯语义（纯 HSL 确定性节点；level 由 graph 侧本地状态驱动）：
+//   L1 CleanRerun  —— 清洁重跑（flaky 容忍重验，无新模型调用）
+//   L2 Bisect      —— bisect 证据回注修复（下一轮模型调用带嫌疑集）
+//   L3 Paged       —— 人工升级（on-call 值班，终态）
+//   LadderExhausted —— 梯耗尽（预算强制下梯 → 放弃，终态）
+// 直接 paging：无法分类 / 模型放弃 → 跳过阶梯直达 L3。
+// 文法覆盖：impl 方法返回 enum / u32 比较链 / for-in 取首元素
+// ============================================================================
+
+import { EscalateEvent } from "../types/vocab.hsl";
+
+#[derive(Debug, Clone)]
+export struct Escalator {
+    ledger_name: String,
+    max_level: u32,
+}
+
+impl Escalator {
+    fn new(ledger_name: String) -> Escalator {
+        Escalator { ledger_name, max_level: 3 }
+    }
+
+    /// 阶梯步进：按当前 level 返回本级动作（level 语义由 graph 侧持有）。
+    /// level 1 → L1；level 2 → L2；level 3 → L3；level > 3 → 梯耗尽。
+    fn step(self, level: u32, suspects: Vec<String>) -> EscalateEvent {
+        if level == 1 {
+            EscalateEvent::L1CleanRerun { note: String::from("clean rerun without cache") }
+        } else if level == 2 {
+            // 取首嫌疑（空集哨兵回退）
+            let mut suspect: String = String::from("(none)");
+            for s in suspects.clone() {
+                if suspect == String::from("(none)") {
+                    suspect = s;
+                }
+            }
+            EscalateEvent::L2Bisect { suspect }
+        } else if level == 3 {
+            EscalateEvent::L3Paged { oncall: format!("{}-oncall", self.ledger_name) }
+        } else {
+            EscalateEvent::LadderExhausted { reason: format!("ladder exhausted at level {}", level) }
+        }
+    }
+
+    /// 直接 paging（无法分类 / 模型放弃 → 跳过阶梯）。
+    fn page_direct(self, reason: String) -> EscalateEvent {
+        EscalateEvent::L3Paged { oncall: format!("{}-oncall ({})", self.ledger_name, reason) }
+    }
+
+    /// 预算强制下梯（修复预算耗尽 → 放弃）。
+    fn force_exhaust(self, reason: String) -> EscalateEvent {
+        EscalateEvent::LadderExhausted { reason }
+    }
+}

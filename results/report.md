@@ -1,7 +1,7 @@
-# Gauntlet Conformance Report — Vigil + Curator (HSL)
+# Gauntlet Conformance Report — Vigil + Curator + Gatemaster (HSL)
 
-> 生成时间：2026-09-05T05:44:23.301Z
-> SUT：2 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline））
+> 生成时间：2026-09-05T06:07:27.130Z
+> SUT：3 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline）；Gatemaster · CI 失败分诊（CI failure triage））
 
 ## 0. 跨 SUT 聚合（泛化实验总览）
 
@@ -9,8 +9,9 @@
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | Vigil | SRE 告警分诊（incident triage） | 9 节点 / 17 边 / 5 守卫环 / fan-out router 三路处置 | 15 | ✓ | ✓ | 100% | 6 条（35%）| 96.3%（26/27）|
 | Curator | 文档策展管线（document curation pipeline） | 8 节点 / 16 边 / 4 守卫环 / fan-in quarantine 五路汇聚 | 15 | ✓ | ✓ | 100% | 8 条（50%）| 100.0%（26/26）|
+| Gatemaster | CI 失败分诊（CI failure triage） | 8 节点 / 19 边 / 6 守卫环 / escalation ladder 阶梯升级（L1 重跑→L2 bisect→L3 paging） | 17 | ✓ | ✓ | 100% | 11 条（58%）| 100.0%（29/29）|
 
-**聚合：30 场景 · 53 变异体（杀死 52，聚合杀死率 98.1%）· 框架层 SUT 专属代码 0 行**
+**聚合：47 场景 · 82 变异体（杀死 81，聚合杀死率 98.8%）· 框架层 SUT 专属代码 0 行**
 
 ---
 
@@ -95,7 +96,7 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 96.3%（26/27 killed，97.6s）**
+**Mutation Score: 96.3%（26/27 killed，57.9s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -226,7 +227,7 @@ nodes: 8   edges: 16
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 100.0%（26/26 killed，55.4s）**
+**Mutation Score: 100.0%（26/26 killed，54.2s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -263,3 +264,133 @@ nodes: 8   edges: 16
 - 场景：15 个（4 nominal + 11 fault），全部确定性可复现
 - Edge coverage：100%，其中 8 条边仅故障场景可达
 - 轨迹不变式：全部满足；变异杀死率：100.0%（26/26）
+
+---
+
+# Gatemaster（CI 失败分诊（CI failure triage））
+
+## 1. 声明拓扑（ground truth）
+
+```
+nodes: 8   edges: 19
+  intake -> log_gate on BuildReceived
+  log_gate -> intake on LogTruncated
+  log_gate -> classifier on LogComplete
+  classifier -> classifier on ClassifyDrift
+  classifier -> fixer on FailureClassified
+  classifier -> escalator on Unclassifiable
+  fixer -> verifier on FixProposed
+  fixer -> fixer on FixDrift
+  fixer -> escalator on NoFixPossible
+  verifier -> ledger on FixVerified
+  verifier -> fixer on FixRejected
+  verifier -> escalator on StillFailing
+  escalator -> verifier on L1CleanRerun
+  escalator -> fixer on L2Bisect
+  escalator -> ledger on L3Paged
+  escalator -> ledger on LadderExhausted
+  budget -> escalator on AttemptsExhausted
+  budget -> ledger on DeadlineAlarm
+  ledger -> intake on CaseDispatched
+```
+
+## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）
+
+全部通过 —— 19 条边守卫均可观测且唯一。
+
+## 3. 场景一致性（nominal + fault）
+
+| 场景 | 类别 | 故障分类 | exit | ok | verdict | fixed/escalated/abandoned | 偏差 | 不变式违反 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| gn1 | nominal | - | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| gn2 | nominal | - | 0 | true | batch-drained | 2/0/0 | ✓ | ✓ |
+| gn3 | nominal | - | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| gn4 | nominal | - | 0 | true | batch-drained | 0/0/0 | ✓ | ✓ |
+| gf1 | fault | model-protocol-drift | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| gf2 | fault | model-protocol-drift | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf3 | fault | model-vocab-drift | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf4 | fault | model-give-up | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf5 | fault | tool-absence | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf6 | fault | tool-corrupt | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf7 | fault | tool-deny | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| gf8 | fault | budget-exhausted | 0 | true | batch-drained | 0/0/1 | ✓ | ✓ |
+| gf9 | fault | budget-exhausted | 0 | true | deadline-break | 0/0/2 | ✓ | ✓ |
+| gf10 | fault | tool-corrupt | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| gf11 | fault | tool-absence | 0 | true | batch-drained | 0/0/1 | ✓ | ✓ |
+| gf12 | fault | tool-corrupt | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| gf13 | fault | model-protocol-drift | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+
+**Conformance: ALL GREEN · Invariants: ALL GREEN**
+
+## 4. Edge Coverage（声明拓扑 vs 事件总线观测）
+
+**100%**（19/19 边触发）
+
+| edge | guard | fired by |
+|:---|:---|:---|
+| intake -> log_gate | `BuildReceived` | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf11, gf12, gf13 |
+| log_gate -> intake | `LogTruncated` | gf10, gf11 |
+| log_gate -> classifier | `LogComplete` | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf12, gf13 |
+| classifier -> classifier | `ClassifyDrift` | gf1, gf2 |
+| classifier -> fixer | `FailureClassified` | gn1, gn2, gn3, gf1, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf12, gf13 |
+| classifier -> escalator | `Unclassifiable` | gf3 |
+| fixer -> verifier | `FixProposed` | gn1, gn2, gn3, gf1, gf5, gf6, gf7, gf8, gf10, gf12, gf13 |
+| fixer -> fixer | `FixDrift` | gf13 |
+| fixer -> escalator | `NoFixPossible` | gf4 |
+| verifier -> ledger | `FixVerified` | gn1, gn2, gn3, gf1, gf10, gf12, gf13 |
+| verifier -> fixer | `FixRejected` | gf8 |
+| verifier -> escalator | `StillFailing` | gn3, gf5, gf6, gf7 |
+| escalator -> verifier | `L1CleanRerun` | gn3, gf5, gf6, gf7 |
+| escalator -> fixer | `L2Bisect` | gf5, gf6, gf7 |
+| escalator -> ledger | `L3Paged` | gf2, gf3, gf4, gf5, gf6, gf7 |
+| escalator -> ledger | `LadderExhausted` | gf8, gf11 |
+| budget -> escalator | `AttemptsExhausted` | gf8 |
+| budget -> ledger | `DeadlineAlarm` | gf9 |
+| ledger -> intake | `CaseDispatched` | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf11, gf12, gf13 |
+
+**Fault-only 边（11 条，占 58%）：** `LogTruncated` (log_gate->intake) · `ClassifyDrift` (classifier->classifier) · `Unclassifiable` (classifier->escalator) · `FixDrift` (fixer->fixer) · `NoFixPossible` (fixer->escalator) · `FixRejected` (verifier->fixer) · `L2Bisect` (escalator->fixer) · `L3Paged` (escalator->ledger) · `LadderExhausted` (escalator->ledger) · `AttemptsExhausted` (budget->escalator) · `DeadlineAlarm` (budget->ledger)
+
+> 这些边在 nominal 套件中结构性不可达 —— 故障注入不是可选项，而是拓扑覆盖的必要条件。
+
+## 5. 变异测试（harness mutation operators）
+
+**Mutation Score: 100.0%（29/29 killed，67.9s）**
+
+| 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
+|:---|:---|:---|:---|:---|
+| M1-G1 | M1 EDGE_DEL | 删除边声明: edge intake -> log_gate on BuildEvent::BuildReceived; | ☠ killed | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf11, gf12, gf13 |
+| M1-G2 | M1 EDGE_DEL | 删除边声明: edge log_gate -> intake on LogEvent::LogTruncated; | ☠ killed | gf10, gf11 |
+| M1-G3 | M1 EDGE_DEL | 删除边声明: edge log_gate -> classifier on LogEvent::LogComplete; | ☠ killed | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf12, gf13 |
+| M1-G4 | M1 EDGE_DEL | 删除边声明: edge classifier -> classifier on ClassifyEvent::ClassifyDrift; | ☠ killed | gf1, gf2 |
+| M1-G5 | M1 EDGE_DEL | 删除边声明: edge classifier -> fixer on ClassifyEvent::FailureClassified; | ☠ killed | gn1, gn2, gn3, gf1, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf12, gf13 |
+| M1-G6 | M1 EDGE_DEL | 删除边声明: edge classifier -> escalator on ClassifyEvent::Unclassifiable; | ☠ killed | gf3 |
+| M1-G7 | M1 EDGE_DEL | 删除边声明: edge fixer -> verifier on FixEvent::FixProposed; | ☠ killed | gn1, gn2, gn3, gf1, gf5, gf6, gf7, gf8, gf10, gf12, gf13 |
+| M1-G8 | M1 EDGE_DEL | 删除边声明: edge fixer -> fixer on FixEvent::FixDrift; | ☠ killed | gf13 |
+| M1-G9 | M1 EDGE_DEL | 删除边声明: edge fixer -> escalator on FixEvent::NoFixPossible; | ☠ killed | gf4 |
+| M1-G10 | M1 EDGE_DEL | 删除边声明: edge verifier -> ledger on VerifyEvent::FixVerified; | ☠ killed | gn1, gn2, gn3, gf1, gf10, gf12, gf13 |
+| M1-G11 | M1 EDGE_DEL | 删除边声明: edge verifier -> fixer on VerifyEvent::FixRejected; | ☠ killed | gf8 |
+| M1-G12 | M1 EDGE_DEL | 删除边声明: edge verifier -> escalator on VerifyEvent::StillFailing; | ☠ killed | gn3, gf5, gf6, gf7 |
+| M1-G13 | M1 EDGE_DEL | 删除边声明: edge escalator -> verifier on EscalateEvent::L1CleanRerun; | ☠ killed | gn3, gf5, gf6, gf7 |
+| M1-G14 | M1 EDGE_DEL | 删除边声明: edge escalator -> fixer on EscalateEvent::L2Bisect; | ☠ killed | gf5, gf6, gf7 |
+| M1-G15 | M1 EDGE_DEL | 删除边声明: edge escalator -> ledger on EscalateEvent::L3Paged; | ☠ killed | gf2, gf3, gf4, gf5, gf6, gf7 |
+| M1-G16 | M1 EDGE_DEL | 删除边声明: edge escalator -> ledger on EscalateEvent::LadderExhausted; | ☠ killed | gf8, gf11 |
+| M1-G17 | M1 EDGE_DEL | 删除边声明: edge budget -> escalator on BudgetSignal::AttemptsExhausted; | ☠ killed | gf8 |
+| M1-G18 | M1 EDGE_DEL | 删除边声明: edge budget -> ledger on BudgetSignal::DeadlineAlarm; | ☠ killed | gf9 |
+| M1-G19 | M1 EDGE_DEL | 删除边声明: edge ledger -> intake on LedgerEvent::CaseDispatched; | ☠ killed | gn1, gn2, gn3, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf11, gf12, gf13 |
+| M2-G1 | M2 EDGE_REDIRECT | fixer->verifier 改为 fixer->escalator（提案跳过验证直达升梯） | ☠ killed | gn1, gn2, gn3, gf1, gf5, gf6, gf7, gf8, gf10, gf12, gf13 |
+| M2-G2 | M2 EDGE_REDIRECT | escalator->verifier 改为 escalator->ledger（L1 重跑直达落账） | ☠ killed | gn3, gf5, gf6, gf7 |
+| M2-G3 | M2 EDGE_REDIRECT | verifier->ledger 改为 verifier->escalator（验证成立进升梯） | ☠ killed | gn1, gn2, gn3, gf1, gf10, gf12, gf13 |
+| M3-G1 | M3 GUARD_SWAP | classifier->fixer 守卫 FailureClassified 换成 ClassifyDrift（守卫别名预期） | ☠ killed | gn1, gn2, gn3, gf1, gf2, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf12, gf13 |
+| M3-G2 | M3 GUARD_SWAP | budget->ledger 守卫 DeadlineAlarm 换成 Within（守卫语义漂移） | ☠ killed | gn1, gn2, gn3, gn4, gf1, gf2, gf3, gf4, gf5, gf6, gf7, gf8, gf9, gf10, gf11, gf12, gf13 |
+| M4-BUDGET | M4 BUDGET_OFF | 死线预算边界 off-by-one（>= -> >） | ☠ killed | gf9 |
+| M5-LOGGATE | M5 GATE_FLIP | 日志闸最小长度 40 → 0（截断永不触发） | ☠ killed | gf10, gf11 |
+| M6-FLAKY | M6 VERIFY_THRESH | flaky 容忍闸松动（flaky_pass 门移除 → 抖动首验即过） | ☠ killed | gn3 |
+| M7-DRIFT-CAP | M7 DRIFT_CAP | 分类漂移硬上限提升（*2 -> *3） | ☠ killed | gf2 |
+| M8-DISPATCH-DROP | M8 DISPATCH_DROP | fix 模式 fixed 落账路径丢弃案例落盘（保留重跑路径） | ☠ killed | gn1, gn2, gf1, gf10, gf12, gf13 |
+
+## 6. 结论摘要
+
+- SUT：Gatemaster —— 8 节点 / 19 边（8 节点 / 19 边 / 6 守卫环 / escalation ladder 阶梯升级（L1 重跑→L2 bisect→L3 paging）），全 HSL
+- 场景：17 个（4 nominal + 13 fault），全部确定性可复现
+- Edge coverage：100%，其中 11 条边仅故障场景可达
+- 轨迹不变式：全部满足；变异杀死率：100.0%（29/29）

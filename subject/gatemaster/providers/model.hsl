@@ -1,0 +1,85 @@
+// ============================================================================
+// gatemaster/providers/model.hsl — 模型端口：trait + 剧本实现 + live 网关实现
+// ============================================================================
+// 文法覆盖：TraitDef（async fn + self）/ impl Trait for Type /
+//           native typescript（$host.fixture.next 多轨道 / $host.llm 网关）/
+//           #[capability(net_connect)] / if-else 表达式值
+// ============================================================================
+
+import { Message } from "../types/builds.hsl";
+import { ProviderError } from "../types/errors.hsl";
+import { Policy } from "../types/state.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 模型端口契约：分类 / 修复两种角色实现 act 即可接入 Gatemaster 拓扑。
+export trait ModelPort {
+    async fn act(self, transcript: Vec<Message>) -> Result<String, ProviderError>;
+}
+
+/// 剧本端口（fixture 多轨道驱动）：CI 可复现、零外联。
+/// track = "classify" | "fix"，逐条消费 $host.fixture.next(track)。
+#[derive(Debug, Clone)]
+export struct ScriptedPort {
+    track: String,
+}
+
+impl ScriptedPort {
+    fn new(track: String) -> ScriptedPort {
+        ScriptedPort { track }
+    }
+}
+
+impl ModelPort for ScriptedPort {
+    async fn act(self, transcript: Vec<Message>) -> Result<String, ProviderError> {
+        let raw: String = native typescript {
+            return await $host.fixture.next(self.track);
+        };
+        if raw.len() == 0 {
+            Err(ProviderError::new(503, format!("fixture track {} exhausted", self.track)))
+        } else {
+            Ok(raw)
+        }
+    }
+}
+
+/// live 端口（z-ai 网关，OpenAI 兼容 chat 协议）。
+#[capability(net_connect)]
+#[derive(Debug, Clone)]
+export struct LivePort {
+    temperature: f64,
+}
+
+impl LivePort {
+    fn new(temperature: f64) -> LivePort {
+        LivePort { temperature }
+    }
+}
+
+impl ModelPort for LivePort {
+    async fn act(self, transcript: Vec<Message>) -> Result<String, ProviderError> {
+        // N1 纪律：prompt 组装在 HSL 侧；native 只做 API 调用与平凡类型捕获
+        let raw: String = native typescript {
+            const r = await $host.llm.complete({
+                messages: transcript.map((m) => ({ role: m.role, content: m.content })),
+                temperature: self.temperature,
+                maxTokens: 1024,
+            });
+            if (r === undefined || r === null) throw new Error("empty completion");
+            return r;
+        };
+        if raw.len() == 0 {
+            Err(ProviderError::new(502, String::from("empty completion")))
+        } else {
+            Ok(raw)
+        }
+    }
+}
+
+/// 端口工厂：按策略装配两种角色端口。
+export fn make_port(policy: Policy, track: String) -> Result<Box<dyn ModelPort>, HarnessError> {
+    if policy.model == String::from("live") {
+        Ok(LivePort::new(policy.temperature))
+    } else {
+        Ok(ScriptedPort::new(track))
+    }
+}

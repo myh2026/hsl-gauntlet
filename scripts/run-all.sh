@@ -6,5 +6,6 @@ cd "$(dirname "$0")/.."
 echo "== 0) SUT 静态检查（S/G/P/N 规则） =="
 bun vendor/dhv-ts/src/main.ts check subject/vigil/vigil.hsl
 bun vendor/dhv-ts/src/main.ts check subject/curator/curator.hsl
-echo "== 1) Gauntlet 全流水线（双 SUT） =="
+bun vendor/dhv-ts/src/main.ts check subject/gatemaster/gatemaster.hsl
+echo "== 1) Gauntlet 全流水线（三 SUT） =="
 bun gauntlet/cli.ts all

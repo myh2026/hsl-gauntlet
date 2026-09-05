@@ -1,0 +1,52 @@
+// ============================================================================
+// gatemaster/agents/parse_fix.hsl — 修复提案协议解析（严格 JSON + 三出口）
+// ============================================================================
+// 硬漂移（非法 JSON）→ Err → graph 侧归类进 FixDrift 漂移通道；
+// 软漂移（合法 JSON 但缺 patch）→ FixDrift；
+// 显式放弃（{"give_up": true, "reason": ".."}）→ NoFixPossible（直接 paging）。
+//
+// 文法覆盖：$host.make 命名变体 / 元组变体 / 三元防御链
+// ============================================================================
+
+import { FixEvent } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 模型输出 → Result<FixEvent, HarnessError>。
+/// 协议：恰好一个 JSON 对象，形如 {"patch": "..", "rationale": ".."}；
+/// 或显式放弃：{"give_up": true, "reason": ".."}。
+export fn parse_fix(raw: String) -> Result<FixEvent, HarnessError> {
+    let parsed: Result<FixEvent, HarnessError> = native typescript {
+        let parsed;
+        try {
+            parsed = $host.json.parse(raw);
+        } catch (e) {
+            return $host.make("Result::Err", [
+                $host.make("HarnessError", {
+                    kind: "protocol",
+                    message: "修复输出不是合法 JSON：" + String(e && e.message || e),
+                }),
+            ]);
+        }
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return $host.make("Result::Ok", [
+                $host.make("FixEvent::FixDrift", { note: "修复输出不是 JSON 对象（软漂移）" }),
+            ]);
+        }
+        if (parsed.give_up === true) {
+            return $host.make("Result::Ok", [
+                $host.make("FixEvent::NoFixPossible", { reason: String(parsed.reason ?? "model gave up") }),
+            ]);
+        }
+        const patch = String(parsed.patch ?? "");
+        if (patch.length === 0) {
+            return $host.make("Result::Ok", [
+                $host.make("FixEvent::FixDrift", { note: "修复输出缺少 patch 字段（软漂移）" }),
+            ]);
+        }
+        const rationale = String(parsed.rationale ?? "");
+        return $host.make("Result::Ok", [
+            $host.make("FixEvent::FixProposed", { patch, rationale }),
+        ]);
+    };
+    return parsed;
+}

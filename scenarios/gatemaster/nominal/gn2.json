@@ -1,0 +1,17 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"BLD-001\", \"repo\": \"checkout-service\", \"commit\": \"a1b2c3d\", \"log\": \"error[E0308]: mismatched types in src/api/handler.rs: expected usize, found String at line 42\"}",
+      "{\"id\": \"BLD-002\", \"repo\": \"payment-gateway\", \"commit\": \"f4e5d6c\", \"log\": \"npm ERR! ERESOLVE could not resolve peer dependency: react@19 requires react-dom@19 but lockfile pins react-dom@18\"}"
+    ],
+    "logs": [],
+    "classify": [
+      "{\"kind\": \"compile\", \"suspects\": [\"src/api/handler.rs\"]}",
+      "{\"kind\": \"dependency\", \"suspects\": [\"package.json\"]}"
+    ],
+    "fix": [
+      "{\"patch\": \"revert-last-commit\", \"rationale\": \"revert the type-mismatch commit\"}",
+      "{\"patch\": \"pin-dependency-version\", \"rationale\": \"pin react-dom to 19\"}"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+// ============================================================================
+// gatemaster/agents/ledger.hsl — 处置账本：案例落账（确定性终态节点）
+// ============================================================================
+// 文法覆盖：impl 方法返回 enum / format! 多元数据 / u32 计数
+// ============================================================================
+
+import { CaseRecord, LedgerEvent } from "../types/builds.hsl";
+
+#[derive(Debug, Clone)]
+export struct DispatchLedger {
+    ledger_name: String,
+    count: u32,
+}
+
+impl DispatchLedger {
+    fn new(ledger_name: String) -> DispatchLedger {
+        DispatchLedger { ledger_name, count: 0 }
+    }
+
+    /// 案例落账：返回 CaseDispatched 事件（graph 侧 match 该事件发射
+    /// ledger -> intake 边 = 批次推进）。
+    fn dispatch(self, case: CaseRecord) -> LedgerEvent {
+        let receipt = format!("[{}] #{} {} -> {} ({})", self.ledger_name, self.count + 1, case.build_id, case.disposition, case.detail);
+        LedgerEvent::CaseDispatched { receipt }
+    }
+}

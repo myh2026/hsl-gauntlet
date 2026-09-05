@@ -1,8 +1,8 @@
-# 泛化实验：第二 SUT Curator 的零框架改动接入
+# 泛化实验：三域 SUT 的零框架改动接入（Vigil → Curator → Gatemaster）
 
 > **主张**：Gauntlet 框架层（拓扑提取 / lint / 场景运行 / 覆盖率 / 不变式 / 变异 / 报告）是 SUT 无关的；
 > 接入一个新域的 SUT 只需要「SUT 本体 + 一份 binding 声明」，不触碰任何框架代码。
-> 本文档记录第八轮为验证该主张所做的对照实验、实测耦合分析与结果。
+> 本文档记录第八轮（SUT #2 Curator）与第十轮（SUT #3 Gatemaster）为验证该主张所做的对照实验、实测耦合分析与结果。
 
 ---
 
@@ -142,11 +142,74 @@ HSL-GUIDE 已知限制候选 #L-22。
 
 ---
 
-## 6. 复现
+## 6. 第十轮：第三 SUT Gatemaster（CI 失败分诊，escalation ladder）
+
+### 6.1 实验设计：第三种结构签名 —— 阶梯（staircase）
+
+Vigil 是 **fan-out router**（一个告警三路分派），Curator 是 **fan-in sink**（五路失败汇聚隔离）；
+Gatemaster 刻意选择了第三种结构签名：**escalation ladder**（顺序升级阶梯 L1→L2→L3 + 双重放弃出口）。
+阶梯拓扑的对比价值：它既不是分派也不是汇聚，而是一条**有序升级链** —— 升级次序本身成为不变式
+（阶梯单调性 GINV-4：L2 必在 L1 之后）。
+
+| 维度 | Vigil（SUT #1） | Curator（SUT #2） | Gatemaster（SUT #3） |
+|:---|:---|:---|:---|
+| 领域 | SRE 告警分诊 | 文档策展管线 | CI 失败分诊 |
+| 拓扑 | 9n / 17e / 5 环 | 8n / 16e / 4 环 | 8n / 19e / 6 环 |
+| 结构签名 | fan-out router | fan-in quarantine 五路汇聚 | **escalation ladder 阶梯升级** |
+| 升级/重试语义 | critic 审查回环 | 双修复回环 | **有序阶梯 L1 重跑→L2 bisect→L3 paging** |
+| 漂移自环 ×2 | ×1 | ×1 | **×2（classify + fix 双漂移自环）** |
+| 工具面重取回环 | （无） | （无） | **log_gate→intake 日志重取回环** |
+| 处置词汇 | committed/parked/escalated | published/quarantined/deferred | fixed/escalated/abandoned |
+| 模型角色轨道 | triage/synthesize/review | extract/enrich | classify/fix |
+| 工具面 | metrics + runbook | corpus.json | signatures.json |
+| 模块数 / 行数 | 15 / ~1100 | 15 / ~1000 | 15 / ~1050 |
+
+### 6.2 接入工作量与框架 delta（第十轮实录）
+
+| 工作项 | 规模 | 说明 |
+|:---|:---|:---|
+| SUT 本体 | 15 个 HSL 模块（~1050 行） | 首版 check 即 **0 error / 0 warning**（第三域零语法摩擦） |
+| binding.ts | 1 个 TS 文件（~390 行） | 17 场景黄金 + 11 不变式 + 29 变异点 |
+| 场景语料 | 17 个 fixture JSON + 4 个 workspace | 全部确定性 |
+| 框架改动 | **0 行** | `subject.ts` 注册表 +1 行；`run-all.sh` check 清单 +1 行（非框架） |
+
+### 6.3 结果（三 SUT 汇总）
+
+（复现：`bash scripts/run-all.sh`，~186s 三 SUT 全流水线）
+
+| 指标 | Vigil | Curator | Gatemaster | 聚合 |
+|:---|:---|:---|:---|:---|
+| 场景一致性 | 15/15 | 15/15 | **17/17**（4 nominal + 13 fault） | **47/47** |
+| 轨迹不变式 | 11/11 | 11/11 | **11/11** | **33/33** |
+| Edge coverage | 100%（17/17） | 100%（16/16） | **100%（19/19）** | — |
+| fault-only 边 | 6（35%） | 8（50%） | **9（47%）** | — |
+| 变异杀死率 | 96.3%（26/27） | 100%（26/26） | **100%（29/29）** | **81/82 = 98.8%** |
+| 存活体 | M6-CRITIC（已归因等价） | 无 | **无** | 1 |
+
+### 6.4 新域观察（论文素材）
+
+- **阶梯单调性成为不变式**：GINV-4（L2 必在 L1 之后）是阶梯拓扑独有的性质类型 —— router/sink
+  域没有对应物。泛化实验的第三个数据点证明：**不变式目录的形态由拓扑结构签名决定**，而
+  检查器（框架）不需任何改动。
+- **双重漂移自环**：classify 与 fix 两个模型角色各自有协议漂移自环 + 会话级漂移预算
+  —— 预算多通道（builds_seen / repair_attempts / drift_count）在 Budget 节点上同构出现。
+- **#L-23 空臂发射（empty-arm emission）**：校准期实测 —— 修复环顶部的穷尽 match 里，
+  `DeadlineAlarm => {}` 空臂照样发射 `budget -> ledger on DeadlineAlarm` 边事件。
+  即：**HSL 的边事件语义是「match 臂执行记录」而非「转移语义」**—— 声明边在臂命中时发射，
+  无论臂体是否真的向目标节点转移。对覆盖率度量的含义：边覆盖度量的是「守卫可观测性」，
+  不是「节点转移真发生了」；计数型守恒不变式必须按臂执行计数（含空臂）。这不是 bug
+  而是设计属性，但它是「拓扑覆盖语义」论文节的关键实测证据。
+- **变异杀死无存活**：Gatemaster 的 29 个变异体全灭 —— 三域给出三种存活形态：结构性等价
+  （Vigil M6-CRITIC）/ 无存活（Curator）/ 无存活（Gatemaster）。阶梯域的 L1/L2/L3 边各被
+  多个场景从不同路径驱动，拓扑签名变异无处藏身。
+
+---
+
+## 7. 复现
 
 ```bash
-bun gauntlet/cli.ts subjects                      # 列出注册的 SUT
-bun gauntlet/cli.ts all                           # 双 SUT 全流水线（117s）
-bun gauntlet/cli.ts all --subject curator         # 只跑 Curator
+bun gauntlet/cli.ts subjects                      # 列出注册的 SUT（vigil / curator / gatemaster）
+bun gauntlet/cli.ts all                           # 三 SUT 全流水线（~186s）
+bun gauntlet/cli.ts all --subject gatemaster      # 只跑 Gatemaster
 bash scripts/run-all.sh                           # check 前置 + 全流水线（watchdog 同款）
 ```
