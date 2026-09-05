@@ -468,3 +468,132 @@ dhv-ts intValOf 与 dhv expr_int_val 双端同构。
 - Vigil 15 模块 0 error 0 warning；Gauntlet 全流水线不变
   （15/15 场景、100% 边覆盖、96.3% 变异杀死率）；
 - 已知限制 #67（三族值级对拍 + L-12/L-13/L-14 全记录）/ #68（S-17）入 HSL-GUIDE。
+
+## 18. 第七轮确认的 bug（L-15 ~ L-21：emit 行为级七连发）
+
+> 战场转移：前六轮深挖**编译器**（parse/check/interp 语义），第七轮把 Gauntlet
+> 方法论对准**代码生成器**——emit 的「语法校验绿灯」掩盖的行为层缺陷。
+> 一个探针（把 `fn main` 投射到 python/js 并真机运行）引出七连发。
+
+### L-15：活体翻译后端投射 `fn main` 只生成定义、无入口调用（静默空转）
+
+- **形态**：python 生成物 `def main(): ...`（翻译完全正确）但没有任何
+  `if __name__ == '__main__'` 守卫；js 生成物 `export function main() {...}`
+  同样无人调用。
+- **结局**：`python3 main.py` / `bun main.js` 运行「成功」（exit 0）但**零输出
+  零副作用** —— 比崩溃更危险（崩溃至少可观测）。emit 报告「N 个文件全部
+  通过语法校验」绿灯，对行为为空完全失明。
+- **对照**：rust 后端在第四轮 L-6 就修过同款（main→hsl_main + Termination
+  wrapper，真机 rustc 实测）；三个「full 活体翻译」后端从未学到这一课。
+- **修复**：入口形态（`fn main` 无参）在文件级追加入口守卫——python 用
+  `if globals().get('__name__') == '__main__': raise SystemExit(main())`
+  （`globals().get` 而非裸 `__name__`：既有语义级测试用 `exec(切片)` 消费
+  生成物，exec 命名空间无该键，裸引用会 NameError）；js/ts 用
+  `import.meta.url === pathToFileURL(realpathSync(argv[1])).href` 入口判别
+  （ESM 无 `__main__` 惯例；被 import 时惰性）。退出码 = main 返回值
+  （与 interp run 的进程级语义对齐；注意 interp run 自身恒 exit 0 是
+  harness 级退出码，与生成物进程级退出码是两个契约层）。
+
+### L-16：未投射依赖静默漏接（X-5 告警补角）
+
+- `fn main` 引用 `add` 但 `add` 只投射到 python 时，js 的接线逻辑静默跳过
+  （`fnLoc.get('javascript')` 无条目）→ 生成物运行期 `ReferenceError: add is
+  not defined` 才暴露。诚实协议已有 X-1（类型未投射）/X-2（跨目录），
+  函数/常量/变体的「本语言未投射」此前是唯一沉默角落。修复：X-5 告警
+  （与 X 系口径对齐：emit 期即暴露，不留运行期惊喜）。
+
+### L-17：python 整除 `//` 是 floor 语义 ≠ interp 截断（-7/2: -4 vs -3）
+
+### L-18：js 整除 `/` 是浮点除（连正数都漂移：7/2 = 3.5 ≠ 3）
+
+- 双修复：三端 prelude 注入 `_dhv_idiv/_dhv_imod/_dhv_div`（python，
+  `q<0 and q*b!=a → q+=1` 精确截断）/ `_dhvIdiv/_dhvDiv`（js，
+  `Math.trunc`）；body 分派：字面量/类型已知整型 → 截断助手；浮点 → 真除；
+  **unknown（参数中转等）→ 运行期类型分流助手**（不再赌类型——此前 unknown
+  静默真除，负数必漂移）。python `%` 是 floor 模（-7%2=1）也统一走
+  `_dhv_imod`；js `%` 天然截断模 ✓。
+
+### L-19：显示规范三端漂移（bool/浮点/枚举/struct/Vec）
+
+- interp 的 display 是**明确规范**（values.ts：Rust-Debug 风格 + JS
+  Number::toString）——python f-string 是另一套（`True`/`3.0`/
+  `<level.Low object>`/`Pt(x=1, y=2)`/`[1, 2, 3]`）、js 模板串是第三套
+  （`[object Object]`/`1,2,3`）。
+- 修复：插值统一经显示层助手（python `_dhv_str` / js-ts `_dhvStr`）+
+  投射侧烘焙（python 枚举/struct 类 `__str__`、js/ts struct 工厂
+  `toString()`、js 枚举 kind-标签对象在 `_dhvStr` 内渲染）。python
+  `_dhv_float_str` 完整复刻 ECMAScript Number::toString（整值浮点
+  `3.0→'3'`、1e16..1e21 定点、`1e-07→'1e-7'`、Infinity/NaN 命名）——
+  **显示一致性本身需要一个 spec**，这是跨后端生成的隐藏工作量。
+- 残留（记录未修）：Option::Some 在生成端是透明值（`Some(5)` 显示为 `5`）
+  ——包裹类改造影响全部生成模式，留待后续；emit 不做 check 前置门
+  （check 错误的程序仍可投射，见 18 节末尾观察）。
+
+### L-20：js 后端标识符约定连环错配（三连发）
+
+- **L-20a**：structLit 用 `lowerFirst`（`pt(1, 2)`）而导出是大写工厂
+  `Pt` → ReferenceError；snake 名（`agent_config`）还有第二重：导出是
+  camel（`agentConfig`）→ 双重错配。修复：body 镜像投射侧 camel 约定。
+- **L-20b**：js 的类型名 import 引用不存在的导出——枚举名/别名在 js 无
+  值导出（`import { Dir } from './dir'` → 模块加载即 SyntaxError）；
+  snake struct 的导入名也须镜像 camel。修复：按投射项 kind 过滤/映射。
+- **L-20c**：单元变体只有 snakeUpper 导出（`LOW`/`MID` 常量），wiring 却
+  import 原名（`Low`）→ SyntaxError。判据：variantOf 双注册（原名+
+  snakeUpper），若 snakeUpper 孪生在引用集 → ts/js 跳过原名。
+
+### L-21：整值浮点字面量发射丢失浮点身份（`3.0` → `3`）
+
+- 根因是宿主语言渗漏：TS `String(3.0)` = `'3'` → 生成物把它当整数
+  （rust i32 推断、`1.0/2.0 → 1/2` 整除 = 0）。修复：整值补 `.0`；
+  显示层由 `_dhv_str` 统一 JS 风格（两层各司其职：**源码层保真类型身份，
+  显示层统一显示规范**）。
+
+### 附带观察（记录未修）
+
+- **emit 不做 check 前置门**：S-4 错误（非 mut 赋值）的程序仍可投射——
+  生成物 js 是 const 重赋值，`Bun.Transpiler` 会以「Parse error」抛出
+  （报错文案误导但判定正确）。check+emit 组合是文档化工作流，门化与否
+  是设计取舍，留第八轮。
+- `Bun.Transpiler` 把 const 重赋值归类为 parse 错误（非运行期）——
+  validator 的「语法✗」有时其实是语义错误，文案层小误导。
+
+## 19. 第七轮实现：行为级对拍护栏（L-11 教训的运行行为层延伸）
+
+第五轮值级对拍锁的是**解析值**；第七轮把同一方法论推进到**运行行为**：
+
+- `tests/run_emit_conformance.ts`：interp run ↔ emit→python3/bun 真实运行，
+  `emit::` 标记行（防横幅混入）逐行全等比对；语料自带 project{} 投射矩阵
+  （`entry_bigint_py.hsl` 只投 python——js 的 >2^53 舍入是 L-9c **已声明
+  投射差异**，不纳入对拍防「已知漂移」污染护栏判据）。
+- 语料 6 类：arith（负数除模，参数中转覆盖 unknown 分流）/ values（字面量
+  与显示族）/ enum（构造+分派+显示）/ struct（camel 镜像+显示）/ vec
+  （集合显示无括号）/ bigint_py（大整数精度，python 单端）。
+- **RED 注入实证**：模拟 L-15 复发（守卫失效）→ 8 组立即转红
+  （`interp N vs python 0 行`——L-15 特征签名：运行成功但零输出）；
+  恢复后 6/6 GREEN。护栏对「行为为空」「值漂移」「运行崩溃」三类缺陷
+  全部敏感。
+- conformance 第 5 段接线：**61→62**（+1 行为级块，11 个后端真实运行）。
+
+## 20. 第七轮元发现（第七课：绿灯的层级）
+
+1. **绿灯是有层级的**：语法绿灯（bun transpiler/python py_compile）<
+   编译绿灯（rustc/javac/go build）< 行为绿灯（真实运行输出对拍）。L-15
+   的生成物在前两层全绿、第三层为零——**每升一层绿灯，就消灭一类「合法
+   但无行为」的假阳性**。前六轮的结论对拍（check 层）、值级对拍（parse
+   层）、本轮行为级对拍（运行层）构成完整阶梯。
+2. **静默成功是最危险的失败形态**：崩溃会举手，零输出零副作用的 exit 0
+   不会。入口守卫缺失能存活六轮，恰恰因为「没人真正运行过生成物」。
+3. **宿主语言渗漏**（L-21 `String(3.0)='3'`）提醒：生成器的每一层
+   （parse/check/interp/emit/显示）都在借用宿主语义，每个借用点都是
+   漂移候选。显示规范（L-19）证明**连「怎么打印」都需要显式 spec**。
+
+## 21. 第七轮回归（全部零误伤 + 修复锁定）
+
+- run-all 145→**149 全绿**（+4：L-15 守卫行为全等 / L-15 惰性 exec 形态 /
+  L-17/L-18 负数除模三端全等 / L-20 js 枚举接线+camel 镜像真机运行）；
+- conformance 61→**62 全一致**（+行为级块：6 语料 / 11 后端真实运行）；
+- dsh fixture 端到端 Ok / nova 15 模块 / backends-demo 214 文件全绿；
+- Vigil 15 模块 0 error 0 warning；Gauntlet 全流水线不变
+  （15/15 场景、100% 边覆盖、96.3% 变异杀死率）；
+- cargo test 9+5+1 全过（dhv 侧 emit 为 contract 级，不受本轮影响）；
+- vendor 同步：dhv-ts 三后端文件 + emit 语料 + runner + conformance 脚本。
