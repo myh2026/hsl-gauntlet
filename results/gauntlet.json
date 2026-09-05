@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-05T04:48:49.509Z",
+  "ts": "2026-09-05T04:58:32.622Z",
   "subjects": [
     {
       "subject": {
@@ -554,7 +554,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 187,
+          "elapsedMs": 129,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -583,7 +583,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 126,
+          "elapsedMs": 113,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -638,7 +638,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 125,
+          "elapsedMs": 143,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -653,7 +653,7 @@
           "edgeSet": [],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 125,
+          "elapsedMs": 111,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -713,7 +713,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 116,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -761,7 +761,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 116,
+          "elapsedMs": 124,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -800,7 +800,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 128,
+          "elapsedMs": 142,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -839,7 +839,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 0,
-          "elapsedMs": 132,
+          "elapsedMs": 121,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -878,7 +878,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 1,
-          "elapsedMs": 119,
+          "elapsedMs": 115,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -921,7 +921,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 113,
+          "elapsedMs": 116,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -972,7 +972,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 118,
+          "elapsedMs": 123,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1022,7 +1022,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 120,
+          "elapsedMs": 135,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1075,7 +1075,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 138,
+          "elapsedMs": 120,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1172,7 +1172,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 0,
-          "elapsedMs": 124,
+          "elapsedMs": 149,
           "conformanceDeviations": [],
           "invariantViolations": []
         }
@@ -1448,18 +1448,3761 @@
         }
       },
       "mutation": {
-        "score": 0,
-        "killed": 0,
-        "total": 0,
-        "results": []
+        "score": 0.9629629629629629,
+        "killed": 26,
+        "total": 27,
+        "results": [
+          {
+            "id": "M1-E1",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge intake -> triager on IntakeEvent::AlertReceived;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E2",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge triager -> investigator on Triage::Investigate;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E3",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge triager -> router on Triage::Escalate;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E4",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge triager -> triager on Triage::Retryable;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-5: DriftWarn at #2 with only 0 prior Retryable",
+                  "INV-5: DriftWarn at #12 with only 0 prior Retryable"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "INV-5: DriftWarn at #2 with only 0 prior Retryable",
+                  "INV-5: DriftWarn at #4 with only 0 prior Retryable",
+                  "INV-5: DriftWarn at #7 with only 0 prior Retryable"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E5",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge investigator -> investigator on Probe::EvidencePending;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E6",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge investigator -> critic on Probe::EvidenceReady;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "INV-4: sound(1) > evidence-ready(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E7",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge investigator -> router on Probe::EvidenceFailed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E8",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge critic -> synthesizer on Critique::Sound;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-3: Submitted at #10 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound",
+                  "INV-3: Submitted at #7 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound",
+                  "INV-3: Submitted at #7 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "INV-3: Submitted at #5 with no prior Sound"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "INV-3: Submitted at #7 with no prior Sound"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E9",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge critic -> investigator on Critique::Insufficient;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E10",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge synthesizer -> reviewer on Draft::Submitted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(1) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "INV-2: accepted(0) + rejected(2) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "INV-2: accepted(1) + rejected(0) > submitted(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E11",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge reviewer -> ledger on Verdict::Accepted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "INV-7: committed cases(1) != Accepted edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E12",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge reviewer -> synthesizer on Verdict::Rejected;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E13",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge router -> ledger on Route::Parked;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-8: parked cases(1) != Parked edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E14",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge router -> ledger on Route::Escalated;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "INV-8: escalated cases(1) != Escalated edges(0)"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "INV-8: escalated cases(1) != Escalated edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E15",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge budget -> router on BudgetSignal::Exhausted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-6: verdict=budget-exhausted but no Exhausted edge"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E16",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge budget -> triager on BudgetSignal::DriftWarn;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-E17",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge ledger -> intake on AdvanceSignal::Committed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "INV-1: Accepted at #7 not followed by Committed (next=EOF)"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "INV-1: Accepted at #7 not followed by Committed (next=AlertReceived)"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "INV-1: Accepted at #12 not followed by Committed (next=DriftWarn)"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "INV-1: Accepted at #9 not followed by Committed (next=EOF)"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-1: Accepted at #7 not followed by Committed (next=Exhausted)"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "INV-1: Accepted at #7 not followed by Committed (next=EOF)"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "INV-1: Accepted at #9 not followed by Committed (next=EOF)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-R1",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "investigator->critic 改为 investigator->router（EvidenceReady）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-R2",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "reviewer->ledger 改为 reviewer->synthesizer（Accepted）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-R3",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "ledger->intake 改为 ledger->triager（Committed）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M3-G1",
+            "operator": "M3 GUARD_SWAP",
+            "description": "triager->router 守卫 Escalate 换成 Retryable（G-8 违规预期）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M3-G2",
+            "operator": "M3 GUARD_SWAP",
+            "description": "budget->router 守卫 Exhausted 换成 Within（守卫语义漂移）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "n4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "INV-6: verdict=budget-exhausted but no Exhausted edge"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M4-BUDGET",
+            "operator": "M4 BUDGET_OFF",
+            "description": "轮预算边界 off-by-one（>= -> >）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "parked 2 != 1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M5-ROUTE",
+            "operator": "M5 ROUTE_FLIP",
+            "description": "路由分流条件翻转（critical -> warning）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n2",
+                "deviations": [
+                  "parked 1 != 0",
+                  "escalated 0 != 1"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f3",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f4",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f5",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f6",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              },
+              {
+                "scenario": "f8",
+                "deviations": [
+                  "parked 1 != 0",
+                  "escalated 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "parked 0 != 1",
+                  "escalated 1 != 0"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M6-CRITIC",
+            "operator": "M6 CRITIC_THRESH",
+            "description": "审查闸门阈值松动（metrics_total >= 2 -> >= 1）",
+            "killed": false,
+            "killedBy": []
+          },
+          {
+            "id": "M7-DRIFT",
+            "operator": "M7 DRIFT_CAP",
+            "description": "漂移硬上限提升（*2 -> *3）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "f2",
+                "deviations": [
+                  "exit 1 != 0",
+                  "ok false != true",
+                  "verdict (missing) != inbox-drained",
+                  "parked 0 != 1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M8-COMMIT",
+            "operator": "M8 COMMIT_DROP",
+            "description": "提交路径丢弃案例落盘（cases.push 删除）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "n1",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "n3",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f1",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f7",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f9",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f10",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              },
+              {
+                "scenario": "f11",
+                "deviations": [
+                  "committed 0 != 1"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "subject": {
+        "id": "curator",
+        "name": "Curator",
+        "domain": "文档策展管线（document curation pipeline）",
+        "entry": "subject/curator/curator.hsl",
+        "dispositions": [
+          "published",
+          "quarantined",
+          "deferred"
+        ],
+        "topoNote": "8 节点 / 16 边 / 4 守卫环 / fan-in quarantine 五路汇聚"
+      },
+      "topo": [
+        {
+          "name": "Curator",
+          "file": "subject/curator/curator.hsl",
+          "nodes": [
+            {
+              "name": "intake",
+              "mut": false,
+              "ty": "DocumentLog"
+            },
+            {
+              "name": "schema_gate",
+              "mut": false,
+              "ty": "SchemaGate"
+            },
+            {
+              "name": "extractor",
+              "mut": false,
+              "ty": "Box"
+            },
+            {
+              "name": "validator",
+              "mut": false,
+              "ty": "EntityValidator"
+            },
+            {
+              "name": "enricher",
+              "mut": false,
+              "ty": "Box"
+            },
+            {
+              "name": "publisher",
+              "mut": false,
+              "ty": "Publisher"
+            },
+            {
+              "name": "quarantine",
+              "mut": false,
+              "ty": "QuarantineLedger"
+            },
+            {
+              "name": "budget",
+              "mut": true,
+              "ty": "Budget"
+            }
+          ],
+          "edges": [
+            {
+              "from": "intake",
+              "to": "schema_gate",
+              "guard": "DocumentReceived",
+              "file": "subject/curator/curator.hsl",
+              "line": 88
+            },
+            {
+              "from": "schema_gate",
+              "to": "extractor",
+              "guard": "SchemaPassed",
+              "file": "subject/curator/curator.hsl",
+              "line": 89
+            },
+            {
+              "from": "schema_gate",
+              "to": "quarantine",
+              "guard": "SchemaFailed",
+              "file": "subject/curator/curator.hsl",
+              "line": 90
+            },
+            {
+              "from": "extractor",
+              "to": "extractor",
+              "guard": "Malformed",
+              "file": "subject/curator/curator.hsl",
+              "line": 91
+            },
+            {
+              "from": "extractor",
+              "to": "validator",
+              "guard": "EntitiesExtracted",
+              "file": "subject/curator/curator.hsl",
+              "line": 92
+            },
+            {
+              "from": "extractor",
+              "to": "quarantine",
+              "guard": "ExtractAbandoned",
+              "file": "subject/curator/curator.hsl",
+              "line": 93
+            },
+            {
+              "from": "validator",
+              "to": "enricher",
+              "guard": "EntitiesValid",
+              "file": "subject/curator/curator.hsl",
+              "line": 94
+            },
+            {
+              "from": "validator",
+              "to": "extractor",
+              "guard": "EntitiesInvalid",
+              "file": "subject/curator/curator.hsl",
+              "line": 95
+            },
+            {
+              "from": "validator",
+              "to": "quarantine",
+              "guard": "ValidationExhausted",
+              "file": "subject/curator/curator.hsl",
+              "line": 96
+            },
+            {
+              "from": "enricher",
+              "to": "publisher",
+              "guard": "EnrichmentComplete",
+              "file": "subject/curator/curator.hsl",
+              "line": 97
+            },
+            {
+              "from": "enricher",
+              "to": "enricher",
+              "guard": "EnrichmentPartial",
+              "file": "subject/curator/curator.hsl",
+              "line": 98
+            },
+            {
+              "from": "enricher",
+              "to": "quarantine",
+              "guard": "EnrichmentFailed",
+              "file": "subject/curator/curator.hsl",
+              "line": 99
+            },
+            {
+              "from": "publisher",
+              "to": "intake",
+              "guard": "Published",
+              "file": "subject/curator/curator.hsl",
+              "line": 100
+            },
+            {
+              "from": "publisher",
+              "to": "enricher",
+              "guard": "PublicationRejected",
+              "file": "subject/curator/curator.hsl",
+              "line": 101
+            },
+            {
+              "from": "budget",
+              "to": "quarantine",
+              "guard": "TurnExhausted",
+              "file": "subject/curator/curator.hsl",
+              "line": 102
+            },
+            {
+              "from": "budget",
+              "to": "extractor",
+              "guard": "DriftAlarm",
+              "file": "subject/curator/curator.hsl",
+              "line": 103
+            }
+          ]
+        }
+      ],
+      "lints": [],
+      "scenarios": [
+        {
+          "id": "cn1",
+          "kind": "nominal",
+          "title": "单文档快乐路径（模式闸→抽取→校验→富集→发布）",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/nominal/cn1.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cn2",
+          "kind": "nominal",
+          "title": "混合批次（发布 + 模式闸拦截）",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/nominal/cn2.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cn3",
+          "kind": "nominal",
+          "title": "校验修复回环（首轮单实体→重抽取→通过→发布）",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/nominal/cn3.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cn4",
+          "kind": "nominal",
+          "title": "空批次边界（零文档）",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/nominal/cn4.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf1",
+          "kind": "fault",
+          "title": "CF1 抽取协议漂移→恢复",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf1-drift-recover.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf2",
+          "kind": "fault",
+          "title": "CF2 抽取协议漂移→硬上限隔离",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf2-drift-exhaust.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf3",
+          "kind": "fault",
+          "title": "CF3 领域语料缺失（corpus.json 缺失）",
+          "faultClass": "tool-absence",
+          "workspace": "scenarios/curator/faults/ws-cf3",
+          "fixture": "scenarios/curator/faults/cf3-corpus-absent.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf4",
+          "kind": "fault",
+          "title": "CF4 领域语料读取损坏（fs.read 截断）",
+          "faultClass": "tool-corrupt",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf4-corpus-corrupt.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 1,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf5",
+          "kind": "fault",
+          "title": "CF5 语料读取权限拒绝（capability 撤销）",
+          "faultClass": "tool-deny",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf5-corpus-deny.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 1,
+            "deniedEvents": 1
+          }
+        },
+        {
+          "id": "cf6",
+          "kind": "fault",
+          "title": "CF6 校验修复回环耗尽（低置信实体 ×3）",
+          "faultClass": "validation-repair-exhausted",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf6-validation-exhaust.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf7",
+          "kind": "fault",
+          "title": "CF7 发布驳回→返工→通过",
+          "faultClass": "review-reject-recover",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf7-publish-reject-recover.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf8",
+          "kind": "fault",
+          "title": "CF8 富集协议硬失败→隔离",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf8-enrich-fail.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 0,
+              "quarantined": 1,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf9",
+          "kind": "fault",
+          "title": "CF9 会话轮预算耗尽（递延收束）",
+          "faultClass": "budget-exhausted",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf9-turn-budget.json",
+          "args": [
+            "--max-turns",
+            "1"
+          ],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "budget-exhausted",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 1
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf10",
+          "kind": "fault",
+          "title": "CF10 富集部分完成→重试→发布",
+          "faultClass": "enrichment-partial",
+          "workspace": "scenarios/curator/nominal/ws-cn1",
+          "fixture": "scenarios/curator/faults/cf10-partial-recover.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        },
+        {
+          "id": "cf11",
+          "kind": "fault",
+          "title": "CF11 语料字段形状损坏→软降级→恢复",
+          "faultClass": "tool-corrupt",
+          "workspace": "scenarios/curator/faults/ws-cf11",
+          "fixture": "scenarios/curator/faults/cf11-corpus-soft.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "batch-drained",
+            "dispositions": {
+              "published": 1,
+              "quarantined": 0,
+              "deferred": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "cn1",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 128,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cn2",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1,
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published",
+            "DocumentReceived",
+            "SchemaFailed"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published",
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->quarantine:SchemaFailed"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published",
+            "SchemaFailed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 127,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cn3",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->extractor:EntitiesInvalid",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 131,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cn4",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {},
+          "edgeSeq": [],
+          "edgeFull": [],
+          "edgeSet": [],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 106,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf1",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "Malformed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->extractor:Malformed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "Malformed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 121,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf2",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "Malformed",
+            "Malformed",
+            "Malformed",
+            "Malformed",
+            "ExtractAbandoned",
+            "DriftAlarm"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->extractor:Malformed",
+            "extractor->extractor:Malformed",
+            "extractor->extractor:Malformed",
+            "extractor->extractor:Malformed",
+            "extractor->quarantine:ExtractAbandoned",
+            "budget->extractor:DriftAlarm"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "Malformed",
+            "ExtractAbandoned",
+            "DriftAlarm"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 130,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf3",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->quarantine:ValidationExhausted"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 128,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf4",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->quarantine:ValidationExhausted"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "faultEvents": 1,
+          "deniedEvents": 0,
+          "elapsedMs": 118,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf5",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->quarantine:ValidationExhausted"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "ValidationExhausted"
+          ],
+          "faultEvents": 1,
+          "deniedEvents": 1,
+          "elapsedMs": 113,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf6",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "ValidationExhausted"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->extractor:EntitiesInvalid",
+            "extractor->validator:EntitiesExtracted",
+            "validator->extractor:EntitiesInvalid",
+            "extractor->validator:EntitiesExtracted",
+            "validator->extractor:EntitiesInvalid",
+            "validator->quarantine:ValidationExhausted"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesInvalid",
+            "ValidationExhausted"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 120,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf7",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "PublicationRejected",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->enricher:PublicationRejected",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "PublicationRejected",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 153,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf8",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "quarantined": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentFailed"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->quarantine:EnrichmentFailed"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentFailed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 113,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf9",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "budget-exhausted",
+          "dispositions": {
+            "published": 1,
+            "deferred": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published",
+            "TurnExhausted"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published",
+            "budget->quarantine:TurnExhausted"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published",
+            "TurnExhausted"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 120,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf10",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentPartial",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->enricher:EnrichmentPartial",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentPartial",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 127,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "cf11",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "batch-drained",
+          "dispositions": {
+            "published": 1
+          },
+          "edgeSeq": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "edgeFull": [
+            "intake->schema_gate:DocumentReceived",
+            "schema_gate->extractor:SchemaPassed",
+            "extractor->validator:EntitiesExtracted",
+            "validator->enricher:EntitiesValid",
+            "enricher->publisher:EnrichmentComplete",
+            "publisher->intake:Published"
+          ],
+          "edgeSet": [
+            "DocumentReceived",
+            "SchemaPassed",
+            "EntitiesExtracted",
+            "EntitiesValid",
+            "EnrichmentComplete",
+            "Published"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 130,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        }
+      ],
+      "coverage": {
+        "edgeCoverage": 1,
+        "declared": [
+          {
+            "from": "intake",
+            "to": "schema_gate",
+            "guard": "DocumentReceived",
+            "file": "subject/curator/curator.hsl",
+            "line": 88
+          },
+          {
+            "from": "schema_gate",
+            "to": "extractor",
+            "guard": "SchemaPassed",
+            "file": "subject/curator/curator.hsl",
+            "line": 89
+          },
+          {
+            "from": "schema_gate",
+            "to": "quarantine",
+            "guard": "SchemaFailed",
+            "file": "subject/curator/curator.hsl",
+            "line": 90
+          },
+          {
+            "from": "extractor",
+            "to": "extractor",
+            "guard": "Malformed",
+            "file": "subject/curator/curator.hsl",
+            "line": 91
+          },
+          {
+            "from": "extractor",
+            "to": "validator",
+            "guard": "EntitiesExtracted",
+            "file": "subject/curator/curator.hsl",
+            "line": 92
+          },
+          {
+            "from": "extractor",
+            "to": "quarantine",
+            "guard": "ExtractAbandoned",
+            "file": "subject/curator/curator.hsl",
+            "line": 93
+          },
+          {
+            "from": "validator",
+            "to": "enricher",
+            "guard": "EntitiesValid",
+            "file": "subject/curator/curator.hsl",
+            "line": 94
+          },
+          {
+            "from": "validator",
+            "to": "extractor",
+            "guard": "EntitiesInvalid",
+            "file": "subject/curator/curator.hsl",
+            "line": 95
+          },
+          {
+            "from": "validator",
+            "to": "quarantine",
+            "guard": "ValidationExhausted",
+            "file": "subject/curator/curator.hsl",
+            "line": 96
+          },
+          {
+            "from": "enricher",
+            "to": "publisher",
+            "guard": "EnrichmentComplete",
+            "file": "subject/curator/curator.hsl",
+            "line": 97
+          },
+          {
+            "from": "enricher",
+            "to": "enricher",
+            "guard": "EnrichmentPartial",
+            "file": "subject/curator/curator.hsl",
+            "line": 98
+          },
+          {
+            "from": "enricher",
+            "to": "quarantine",
+            "guard": "EnrichmentFailed",
+            "file": "subject/curator/curator.hsl",
+            "line": 99
+          },
+          {
+            "from": "publisher",
+            "to": "intake",
+            "guard": "Published",
+            "file": "subject/curator/curator.hsl",
+            "line": 100
+          },
+          {
+            "from": "publisher",
+            "to": "enricher",
+            "guard": "PublicationRejected",
+            "file": "subject/curator/curator.hsl",
+            "line": 101
+          },
+          {
+            "from": "budget",
+            "to": "quarantine",
+            "guard": "TurnExhausted",
+            "file": "subject/curator/curator.hsl",
+            "line": 102
+          },
+          {
+            "from": "budget",
+            "to": "extractor",
+            "guard": "DriftAlarm",
+            "file": "subject/curator/curator.hsl",
+            "line": 103
+          }
+        ],
+        "neverFired": [],
+        "faultOnly": [
+          "Malformed",
+          "ExtractAbandoned",
+          "ValidationExhausted",
+          "EnrichmentPartial",
+          "EnrichmentFailed",
+          "PublicationRejected",
+          "TurnExhausted",
+          "DriftAlarm"
+        ],
+        "fired": {
+          "DocumentReceived": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf2",
+            "cf3",
+            "cf4",
+            "cf5",
+            "cf6",
+            "cf7",
+            "cf8",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "SchemaPassed": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf2",
+            "cf3",
+            "cf4",
+            "cf5",
+            "cf6",
+            "cf7",
+            "cf8",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "EntitiesExtracted": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf3",
+            "cf4",
+            "cf5",
+            "cf6",
+            "cf7",
+            "cf8",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "EntitiesValid": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf7",
+            "cf8",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "EnrichmentComplete": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf7",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "Published": [
+            "cn1",
+            "cn2",
+            "cn3",
+            "cf1",
+            "cf7",
+            "cf9",
+            "cf10",
+            "cf11"
+          ],
+          "SchemaFailed": [
+            "cn2"
+          ],
+          "EntitiesInvalid": [
+            "cn3",
+            "cf6"
+          ],
+          "Malformed": [
+            "cf1",
+            "cf2"
+          ],
+          "ExtractAbandoned": [
+            "cf2"
+          ],
+          "DriftAlarm": [
+            "cf2"
+          ],
+          "ValidationExhausted": [
+            "cf3",
+            "cf4",
+            "cf5",
+            "cf6"
+          ],
+          "PublicationRejected": [
+            "cf7"
+          ],
+          "EnrichmentFailed": [
+            "cf8"
+          ],
+          "TurnExhausted": [
+            "cf9"
+          ],
+          "EnrichmentPartial": [
+            "cf10"
+          ]
+        }
+      },
+      "mutation": {
+        "score": 1,
+        "killed": 26,
+        "total": 26,
+        "results": [
+          {
+            "id": "M1-C1",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge intake -> schema_gate on DocEvent::DocumentReceived;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "CINV-1: Published at #4 followed by SchemaFailed (not DocumentReceived/TurnExhausted/EOF)",
+                  "CINV-2: published(1) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "CINV-2: published(0) + quarantined(1) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "CINV-2: published(1) + quarantined(0) > DocumentReceived(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C2",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge schema_gate -> extractor on SchemaEvent::SchemaPassed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C3",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge schema_gate -> quarantine on SchemaEvent::SchemaFailed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C4",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge extractor -> extractor on ExtractEvent::Malformed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "CINV-5: DriftAlarm at #3 with only 0 prior Malformed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C5",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge extractor -> validator on ExtractEvent::EntitiesExtracted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C6",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge extractor -> quarantine on ExtractEvent::ExtractAbandoned;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C7",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge validator -> enricher on ValidateEvent::EntitiesValid;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #3 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #3 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #5 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #4 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #3 with no prior EntitiesValid",
+                  "CINV-3: EnrichmentComplete at #5 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(2) > entities-valid(0) + rejected(1)"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #3 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #4 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "CINV-3: EnrichmentComplete at #3 with no prior EntitiesValid",
+                  "CINV-4: enrichment-complete(1) > entities-valid(0) + rejected(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C8",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge validator -> extractor on ValidateEvent::EntitiesInvalid;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C9",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge validator -> quarantine on ValidateEvent::ValidationExhausted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C10",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge enricher -> publisher on EnrichEvent::EnrichmentComplete;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C11",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge enricher -> enricher on EnrichEvent::EnrichmentPartial;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C12",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge enricher -> quarantine on EnrichEvent::EnrichmentFailed;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "CINV-8: quarantined cases(1) != fan-in edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C13",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge publisher -> intake on PublishEvent::Published;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "CINV-7: published cases(1) != Published edges(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C14",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge publisher -> enricher on PublishEvent::PublicationRejected;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "CINV-4: enrichment-complete(2) > entities-valid(1) + rejected(0)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C15",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge budget -> quarantine on BudgetSignal::TurnExhausted;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "CINV-6: verdict=budget-exhausted but no TurnExhausted edge"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M1-C16",
+            "operator": "M1 EDGE_DEL",
+            "description": "删除边声明: edge budget -> extractor on BudgetSignal::DriftAlarm;",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-C1",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "validator->enricher 改为 validator->quarantine（EntitiesValid 直达隔离）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-C2",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "publisher->intake 改为 publisher->quarantine（Published 汇入隔离）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M2-C3",
+            "operator": "M2 EDGE_REDIRECT",
+            "description": "schema_gate->extractor 改为 schema_gate->validator（SchemaPassed 跳过抽取）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M3-C1",
+            "operator": "M3 GUARD_SWAP",
+            "description": "extractor->validator 守卫 EntitiesExtracted 换成 Malformed（G-8 违规预期）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M3-C2",
+            "operator": "M3 GUARD_SWAP",
+            "description": "budget->quarantine 守卫 TurnExhausted 换成 Within（守卫语义漂移）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "CINV-1: Published at #6 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "CINV-1: Published at #6 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "CINV-1: Published at #8 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cn4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "CINV-1: Published at #7 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "CINV-1: Published at #8 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "CINV-6: verdict=budget-exhausted but no TurnExhausted edge"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "CINV-1: Published at #7 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "CINV-1: Published at #6 followed by Within (not DocumentReceived/TurnExhausted/EOF)"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M4-BUDGET",
+            "operator": "M4 BUDGET_OFF",
+            "description": "轮预算边界 off-by-one（>= -> >）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "exit 1 != 0",
+                  "ok false != true",
+                  "verdict (missing) != budget-exhausted",
+                  "published 0 != 1",
+                  "deferred 0 != 1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M5-SCHEMA",
+            "operator": "M5 SCHEMA_FLIP",
+            "description": "模式闸最小体长阈值翻转（30 -> 300：快乐路径文档被拦截）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 2 != 1"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf3",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf4",
+                "deviations": [
+                  "fault_events 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf5",
+                "deviations": [
+                  "fault_events 0 != 1",
+                  "denied_events 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf6",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cf8",
+                "deviations": [
+                  "differential: topological/behavioral signature changed"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "published 0 != 1",
+                  "quarantined 1 != 0"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M6-VALIDATE",
+            "operator": "M6 VALIDATE_THRESH",
+            "description": "校验闸门阈值松动（min_entities 2 -> 1）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "exit 1 != 0",
+                  "ok false != true",
+                  "verdict (missing) != batch-drained",
+                  "published 0 != 1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M7-DRIFT",
+            "operator": "M7 DRIFT_CAP",
+            "description": "漂移硬上限提升（*2 -> *3）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cf2",
+                "deviations": [
+                  "exit 1 != 0",
+                  "ok false != true",
+                  "verdict (missing) != batch-drained",
+                  "quarantined 0 != 1"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "M8-PUBLISH",
+            "operator": "M8 PUBLISH_DROP",
+            "description": "发布路径丢弃案例落盘（cases.push 删除）",
+            "killed": true,
+            "killedBy": [
+              {
+                "scenario": "cn1",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cn2",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cn3",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf1",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf7",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf9",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf10",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              },
+              {
+                "scenario": "cf11",
+                "deviations": [
+                  "published 0 != 1"
+                ]
+              }
+            ]
+          }
+        ]
       }
     }
   ],
   "aggregate": {
-    "subjectCount": 1,
-    "scenarios": 15,
-    "mutants": 0,
-    "killed": 0,
+    "subjectCount": 2,
+    "scenarios": 30,
+    "mutants": 53,
+    "killed": 52,
     "edgeCoverageAvg": 1
   }
 }

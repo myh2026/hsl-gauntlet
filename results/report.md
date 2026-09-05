@@ -1,15 +1,16 @@
-# Gauntlet Conformance Report — Vigil (HSL)
+# Gauntlet Conformance Report — Vigil + Curator (HSL)
 
-> 生成时间：2026-09-05T04:48:49.508Z
-> SUT：1 个（Vigil · SRE 告警分诊（incident triage））
+> 生成时间：2026-09-05T04:58:32.621Z
+> SUT：2 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline））
 
 ## 0. 跨 SUT 聚合（泛化实验总览）
 
 | SUT | 域 | 拓扑 | 场景 | conformance | 不变式 | Edge Coverage | fault-only 边 | 变异杀死率 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| Vigil | SRE 告警分诊（incident triage） | 9 节点 / 17 边 / 5 守卫环 / fan-out router 三路处置 | 15 | ✓ | ✓ | 100% | 6 条（35%）| 0.0%（0/0）|
+| Vigil | SRE 告警分诊（incident triage） | 9 节点 / 17 边 / 5 守卫环 / fan-out router 三路处置 | 15 | ✓ | ✓ | 100% | 6 条（35%）| 96.3%（26/27）|
+| Curator | 文档策展管线（document curation pipeline） | 8 节点 / 16 边 / 4 守卫环 / fan-in quarantine 五路汇聚 | 15 | ✓ | ✓ | 100% | 8 条（50%）| 100.0%（26/26）|
 
-**聚合：15 场景 · 0 变异体（杀死 0，聚合杀死率 0.0%）· 框架层 SUT 专属代码 0 行**
+**聚合：30 场景 · 53 变异体（杀死 52，聚合杀死率 98.1%）· 框架层 SUT 专属代码 0 行**
 
 ---
 
@@ -94,14 +95,163 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 0.0%（0/0 killed，0.0s）**
+**Mutation Score: 96.3%（26/27 killed，56.9s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
+| M1-E1 | M1 EDGE_DEL | 删除边声明: edge intake -> triager on IntakeEvent::AlertReceived; | ☠ killed | n1, n2, n3, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11 |
+| M1-E2 | M1 EDGE_DEL | 删除边声明: edge triager -> investigator on Triage::Investigate; | ☠ killed | n1, n3, f1, f3, f4, f5, f6, f7, f8, f9, f10, f11 |
+| M1-E3 | M1 EDGE_DEL | 删除边声明: edge triager -> router on Triage::Escalate; | ☠ killed | n2, n3 |
+| M1-E4 | M1 EDGE_DEL | 删除边声明: edge triager -> triager on Triage::Retryable; | ☠ killed | f1, f2, f11 |
+| M1-E5 | M1 EDGE_DEL | 删除边声明: edge investigator -> investigator on Probe::EvidencePending; | ☠ killed | n1, n3, f1, f3, f4, f5, f6, f7, f8, f9, f10, f11 |
+| M1-E6 | M1 EDGE_DEL | 删除边声明: edge investigator -> critic on Probe::EvidenceReady; | ☠ killed | n1, n3, f1, f6, f7, f8, f9, f10, f11 |
+| M1-E7 | M1 EDGE_DEL | 删除边声明: edge investigator -> router on Probe::EvidenceFailed; | ☠ killed | f3, f4, f5, f6 |
+| M1-E8 | M1 EDGE_DEL | 删除边声明: edge critic -> synthesizer on Critique::Sound; | ☠ killed | n1, n3, f1, f7, f8, f9, f10, f11 |
+| M1-E9 | M1 EDGE_DEL | 删除边声明: edge critic -> investigator on Critique::Insufficient; | ☠ killed | f6 |
+| M1-E10 | M1 EDGE_DEL | 删除边声明: edge synthesizer -> reviewer on Draft::Submitted; | ☠ killed | n1, n3, f1, f7, f8, f9, f10, f11 |
+| M1-E11 | M1 EDGE_DEL | 删除边声明: edge reviewer -> ledger on Verdict::Accepted; | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
+| M1-E12 | M1 EDGE_DEL | 删除边声明: edge reviewer -> synthesizer on Verdict::Rejected; | ☠ killed | f7, f8 |
+| M1-E13 | M1 EDGE_DEL | 删除边声明: edge router -> ledger on Route::Parked; | ☠ killed | n3, f2, f3, f4, f5, f6, f9 |
+| M1-E14 | M1 EDGE_DEL | 删除边声明: edge router -> ledger on Route::Escalated; | ☠ killed | n2, f8 |
+| M1-E15 | M1 EDGE_DEL | 删除边声明: edge budget -> router on BudgetSignal::Exhausted; | ☠ killed | f9 |
+| M1-E16 | M1 EDGE_DEL | 删除边声明: edge budget -> triager on BudgetSignal::DriftWarn; | ☠ killed | f1, f2 |
+| M1-E17 | M1 EDGE_DEL | 删除边声明: edge ledger -> intake on AdvanceSignal::Committed; | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
+| M2-R1 | M2 EDGE_REDIRECT | investigator->critic 改为 investigator->router（EvidenceReady） | ☠ killed | n1, n3, f1, f6, f7, f8, f9, f10, f11 |
+| M2-R2 | M2 EDGE_REDIRECT | reviewer->ledger 改为 reviewer->synthesizer（Accepted） | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
+| M2-R3 | M2 EDGE_REDIRECT | ledger->intake 改为 ledger->triager（Committed） | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
+| M3-G1 | M3 GUARD_SWAP | triager->router 守卫 Escalate 换成 Retryable（G-8 违规预期） | ☠ killed | n2, n3, f1, f2, f11 |
+| M3-G2 | M3 GUARD_SWAP | budget->router 守卫 Exhausted 换成 Within（守卫语义漂移） | ☠ killed | n1, n2, n3, n4, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11 |
+| M4-BUDGET | M4 BUDGET_OFF | 轮预算边界 off-by-one（>= -> >） | ☠ killed | f9 |
+| M5-ROUTE | M5 ROUTE_FLIP | 路由分流条件翻转（critical -> warning） | ☠ killed | n2, n3, f2, f3, f4, f5, f6, f8, f9 |
+| M6-CRITIC | M6 CRITIC_THRESH | 审查闸门阈值松动（metrics_total >= 2 -> >= 1） | **SURVIVED** | - |
+| M7-DRIFT | M7 DRIFT_CAP | 漂移硬上限提升（*2 -> *3） | ☠ killed | f2 |
+| M8-COMMIT | M8 COMMIT_DROP | 提交路径丢弃案例落盘（cases.push 删除） | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
+
+**存活变异体（1）——测试套件盲区，需补场景：**
+- M6-CRITIC M6 CRITIC_THRESH: 审查闸门阈值松动（metrics_total >= 2 -> >= 1）
 
 ## 6. 结论摘要
 
 - SUT：Vigil —— 9 节点 / 17 边（9 节点 / 17 边 / 5 守卫环 / fan-out router 三路处置），全 HSL
 - 场景：15 个（4 nominal + 11 fault），全部确定性可复现
 - Edge coverage：100%，其中 6 条边仅故障场景可达
-- 轨迹不变式：全部满足；变异杀死率：0.0%（0/0）
+- 轨迹不变式：全部满足；变异杀死率：96.3%（26/27）
+
+---
+
+# Curator（文档策展管线（document curation pipeline））
+
+## 1. 声明拓扑（ground truth）
+
+```
+nodes: 8   edges: 16
+  intake -> schema_gate on DocumentReceived
+  schema_gate -> extractor on SchemaPassed
+  schema_gate -> quarantine on SchemaFailed
+  extractor -> extractor on Malformed
+  extractor -> validator on EntitiesExtracted
+  extractor -> quarantine on ExtractAbandoned
+  validator -> enricher on EntitiesValid
+  validator -> extractor on EntitiesInvalid
+  validator -> quarantine on ValidationExhausted
+  enricher -> publisher on EnrichmentComplete
+  enricher -> enricher on EnrichmentPartial
+  enricher -> quarantine on EnrichmentFailed
+  publisher -> intake on Published
+  publisher -> enricher on PublicationRejected
+  budget -> quarantine on TurnExhausted
+  budget -> extractor on DriftAlarm
+```
+
+## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）
+
+全部通过 —— 16 条边守卫均可观测且唯一。
+
+## 3. 场景一致性（nominal + fault）
+
+| 场景 | 类别 | 故障分类 | exit | ok | verdict | published/quarantined/deferred | 偏差 | 不变式违反 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| cn1 | nominal | - | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| cn2 | nominal | - | 0 | true | batch-drained | 1/1/0 | ✓ | ✓ |
+| cn3 | nominal | - | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| cn4 | nominal | - | 0 | true | batch-drained | 0/0/0 | ✓ | ✓ |
+| cf1 | fault | model-protocol-drift | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| cf2 | fault | model-protocol-drift | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf3 | fault | tool-absence | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf4 | fault | tool-corrupt | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf5 | fault | tool-deny | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf6 | fault | validation-repair-exhausted | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf7 | fault | review-reject-recover | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| cf8 | fault | model-protocol-drift | 0 | true | batch-drained | 0/1/0 | ✓ | ✓ |
+| cf9 | fault | budget-exhausted | 0 | true | budget-exhausted | 1/0/1 | ✓ | ✓ |
+| cf10 | fault | enrichment-partial | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+| cf11 | fault | tool-corrupt | 0 | true | batch-drained | 1/0/0 | ✓ | ✓ |
+
+**Conformance: ALL GREEN · Invariants: ALL GREEN**
+
+## 4. Edge Coverage（声明拓扑 vs 事件总线观测）
+
+**100%**（16/16 边触发）
+
+| edge | guard | fired by |
+|:---|:---|:---|
+| intake -> schema_gate | `DocumentReceived` | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| schema_gate -> extractor | `SchemaPassed` | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| schema_gate -> quarantine | `SchemaFailed` | cn2 |
+| extractor -> extractor | `Malformed` | cf1, cf2 |
+| extractor -> validator | `EntitiesExtracted` | cn1, cn2, cn3, cf1, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| extractor -> quarantine | `ExtractAbandoned` | cf2 |
+| validator -> enricher | `EntitiesValid` | cn1, cn2, cn3, cf1, cf7, cf8, cf9, cf10, cf11 |
+| validator -> extractor | `EntitiesInvalid` | cn3, cf6 |
+| validator -> quarantine | `ValidationExhausted` | cf3, cf4, cf5, cf6 |
+| enricher -> publisher | `EnrichmentComplete` | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+| enricher -> enricher | `EnrichmentPartial` | cf10 |
+| enricher -> quarantine | `EnrichmentFailed` | cf8 |
+| publisher -> intake | `Published` | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+| publisher -> enricher | `PublicationRejected` | cf7 |
+| budget -> quarantine | `TurnExhausted` | cf9 |
+| budget -> extractor | `DriftAlarm` | cf2 |
+
+**Fault-only 边（8 条，占 50%）：** `Malformed` (extractor->extractor) · `ExtractAbandoned` (extractor->quarantine) · `ValidationExhausted` (validator->quarantine) · `EnrichmentPartial` (enricher->enricher) · `EnrichmentFailed` (enricher->quarantine) · `PublicationRejected` (publisher->enricher) · `TurnExhausted` (budget->quarantine) · `DriftAlarm` (budget->extractor)
+
+> 这些边在 nominal 套件中结构性不可达 —— 故障注入不是可选项，而是拓扑覆盖的必要条件。
+
+## 5. 变异测试（harness mutation operators）
+
+**Mutation Score: 100.0%（26/26 killed，54.3s）**
+
+| 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
+|:---|:---|:---|:---|:---|
+| M1-C1 | M1 EDGE_DEL | 删除边声明: edge intake -> schema_gate on DocEvent::DocumentReceived; | ☠ killed | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M1-C2 | M1 EDGE_DEL | 删除边声明: edge schema_gate -> extractor on SchemaEvent::SchemaPassed; | ☠ killed | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M1-C3 | M1 EDGE_DEL | 删除边声明: edge schema_gate -> quarantine on SchemaEvent::SchemaFailed; | ☠ killed | cn2 |
+| M1-C4 | M1 EDGE_DEL | 删除边声明: edge extractor -> extractor on ExtractEvent::Malformed; | ☠ killed | cf1, cf2 |
+| M1-C5 | M1 EDGE_DEL | 删除边声明: edge extractor -> validator on ExtractEvent::EntitiesExtracted; | ☠ killed | cn1, cn2, cn3, cf1, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M1-C6 | M1 EDGE_DEL | 删除边声明: edge extractor -> quarantine on ExtractEvent::ExtractAbandoned; | ☠ killed | cf2 |
+| M1-C7 | M1 EDGE_DEL | 删除边声明: edge validator -> enricher on ValidateEvent::EntitiesValid; | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf8, cf9, cf10, cf11 |
+| M1-C8 | M1 EDGE_DEL | 删除边声明: edge validator -> extractor on ValidateEvent::EntitiesInvalid; | ☠ killed | cn3, cf6 |
+| M1-C9 | M1 EDGE_DEL | 删除边声明: edge validator -> quarantine on ValidateEvent::ValidationExhausted; | ☠ killed | cf3, cf4, cf5, cf6 |
+| M1-C10 | M1 EDGE_DEL | 删除边声明: edge enricher -> publisher on EnrichEvent::EnrichmentComplete; | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+| M1-C11 | M1 EDGE_DEL | 删除边声明: edge enricher -> enricher on EnrichEvent::EnrichmentPartial; | ☠ killed | cf10 |
+| M1-C12 | M1 EDGE_DEL | 删除边声明: edge enricher -> quarantine on EnrichEvent::EnrichmentFailed; | ☠ killed | cf8 |
+| M1-C13 | M1 EDGE_DEL | 删除边声明: edge publisher -> intake on PublishEvent::Published; | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+| M1-C14 | M1 EDGE_DEL | 删除边声明: edge publisher -> enricher on PublishEvent::PublicationRejected; | ☠ killed | cf7 |
+| M1-C15 | M1 EDGE_DEL | 删除边声明: edge budget -> quarantine on BudgetSignal::TurnExhausted; | ☠ killed | cf9 |
+| M1-C16 | M1 EDGE_DEL | 删除边声明: edge budget -> extractor on BudgetSignal::DriftAlarm; | ☠ killed | cf2 |
+| M2-C1 | M2 EDGE_REDIRECT | validator->enricher 改为 validator->quarantine（EntitiesValid 直达隔离） | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf8, cf9, cf10, cf11 |
+| M2-C2 | M2 EDGE_REDIRECT | publisher->intake 改为 publisher->quarantine（Published 汇入隔离） | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+| M2-C3 | M2 EDGE_REDIRECT | schema_gate->extractor 改为 schema_gate->validator（SchemaPassed 跳过抽取） | ☠ killed | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M3-C1 | M3 GUARD_SWAP | extractor->validator 守卫 EntitiesExtracted 换成 Malformed（G-8 违规预期） | ☠ killed | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M3-C2 | M3 GUARD_SWAP | budget->quarantine 守卫 TurnExhausted 换成 Within（守卫语义漂移） | ☠ killed | cn1, cn2, cn3, cn4, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M4-BUDGET | M4 BUDGET_OFF | 轮预算边界 off-by-one（>= -> >） | ☠ killed | cf9 |
+| M5-SCHEMA | M5 SCHEMA_FLIP | 模式闸最小体长阈值翻转（30 -> 300：快乐路径文档被拦截） | ☠ killed | cn1, cn2, cn3, cf1, cf2, cf3, cf4, cf5, cf6, cf7, cf8, cf9, cf10, cf11 |
+| M6-VALIDATE | M6 VALIDATE_THRESH | 校验闸门阈值松动（min_entities 2 -> 1） | ☠ killed | cn3 |
+| M7-DRIFT | M7 DRIFT_CAP | 漂移硬上限提升（*2 -> *3） | ☠ killed | cf2 |
+| M8-PUBLISH | M8 PUBLISH_DROP | 发布路径丢弃案例落盘（cases.push 删除） | ☠ killed | cn1, cn2, cn3, cf1, cf7, cf9, cf10, cf11 |
+
+## 6. 结论摘要
+
+- SUT：Curator —— 8 节点 / 16 边（8 节点 / 16 边 / 4 守卫环 / fan-in quarantine 五路汇聚），全 HSL
+- 场景：15 个（4 nominal + 11 fault），全部确定性可复现
+- Edge coverage：100%，其中 8 条边仅故障场景可达
+- 轨迹不变式：全部满足；变异杀死率：100.0%（26/26）
