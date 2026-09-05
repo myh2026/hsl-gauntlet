@@ -1,0 +1,73 @@
+// ============================================================================
+// vigil/agents/scribe.hsl — 综合/审计协议解析 + ledger 提交（草稿与裁决词汇）
+// ============================================================================
+// 文法覆盖：HashMap 工具 / if-else if 链 / Result 通道 / AdvanceSignal 单元
+// ============================================================================
+
+import { CaseRecord, AdvanceSignal } from "../types/alerts.hsl";
+import { Draft, Verdict } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 综合模型输出 → Draft（postmortem 草稿）。
+export fn parse_draft(raw: String) -> Result<Draft, HarnessError> {
+    let fields: HashMap<String, String> = native typescript {
+        try {
+            return $host.json.fields(raw);
+        } catch (e) {
+            const m = new Map();
+            m.set("error", String(e && e.message || e));
+            return m;
+        }
+    };
+    if fields.contains_key("error") {
+        let detail = fields.get("error").unwrap_or(String::from("?"));
+        return Err(HarnessError::new(String::from("protocol"), format!("综合输出不是合法 JSON：{}", detail)));
+    }
+    Ok(Draft::Submitted { text: fields.get("text").unwrap_or(String::from("")) })
+}
+
+/// 审计模型输出 → Verdict。
+export fn parse_verdict(raw: String) -> Result<Verdict, HarnessError> {
+    let fields: HashMap<String, String> = native typescript {
+        try {
+            return $host.json.fields(raw);
+        } catch (e) {
+            const m = new Map();
+            m.set("error", String(e && e.message || e));
+            return m;
+        }
+    };
+    if fields.contains_key("error") {
+        let detail = fields.get("error").unwrap_or(String::from("?"));
+        return Err(HarnessError::new(String::from("protocol"), format!("审计输出不是合法 JSON：{}", detail)));
+    }
+    let verdict = fields.get("verdict").unwrap_or(String::from(""));
+    if verdict == String::from("accept") {
+        Ok(Verdict::Accepted)
+    } else if verdict == String::from("reject") {
+        Ok(Verdict::Rejected { note: fields.get("note").unwrap_or(String::from("")) })
+    } else {
+        Err(HarnessError::new(String::from("protocol"), format!("verdict 必须是 accept/reject，得到 \"{}\"", verdict)))
+    }
+}
+
+#[derive(Debug, Clone)]
+export struct Ledger {
+    run_id: String,
+}
+
+impl Ledger {
+    fn new(run_id: String) -> Ledger {
+        Ledger { run_id }
+    }
+
+    /// 提交一例处置：返回回环信号（SessionDone 为时间窗截止预留扩展点）。
+    fn commit_case(self, case: CaseRecord) -> AdvanceSignal {
+        AdvanceSignal::Committed
+    }
+
+    /// 渲染案例行（cases.jsonl 产物数据面）。
+    fn render(self, case: CaseRecord) -> String {
+        format!("{} | {} | {} | {}", self.run_id, case.alert_id, case.disposition, case.detail)
+    }
+}

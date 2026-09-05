@@ -1,0 +1,122 @@
+// ============================================================================
+// vigil/agents/investigator.hsl — 调查员：确定性证据计划探查（probe_once）
+// ============================================================================
+// 文法覆盖：match 穷尽（Option）/ clone 语义 / Vec 计数循环 /
+//           if-else if 链 / Result→值 化（工具失败是值不是异常）
+// ============================================================================
+
+import { Alert, Evidence } from "../types/alerts.hsl";
+import { Probe } from "../types/vocab.hsl";
+import { Policy } from "../types/state.hsl";
+import { lookup_metrics } from "../tools/telemetry.hsl";
+import { lookup_runbook } from "../tools/knowledge.hsl";
+
+/// 调查员节点：证据计划 = 2×metrics + 1×runbook，逐次探查一块缺口。
+/// 工具失败（故障注入面：fs.read）→ EvidencePending 携带失败说明（自环重试）；
+/// 计划耗尽仍不满足 → EvidenceFailed（证据链断裂 → router）。
+#[derive(Debug, Clone)]
+export struct Investigator {
+    policy: Policy,
+}
+
+impl Investigator {
+    fn new(policy: Policy) -> Investigator {
+        Investigator { policy }
+    }
+
+    /// 单次探查：按证据缺口选择下一块，返回探查状态（不抛工具错）。
+    fn probe_once(self, alert: Alert, hypothesis: String, have: Vec<Evidence>) -> Probe {
+        let mut evidence = have.clone();
+        let metrics_count = count_kind(evidence.clone(), String::from("metrics"));
+        let runbook_count = count_kind(evidence.clone(), String::from("runbook"));
+
+        if metrics_count == 0 {
+            // 第一块：围绕假设关键词查主信号
+            let kw = first_keyword(hypothesis.clone());
+            let r = lookup_metrics(format!("metrics:{}", kw));
+            match r {
+                Ok(out) => {
+                    if out.ok {
+                        evidence.push(Evidence {
+                            kind: String::from("metrics"),
+                            label: format!("metrics:{}", kw),
+                            detail: out.body,
+                        });
+                        Probe::EvidencePending { collected: evidence, note: format!("collected primary signal for {}", kw) }
+                    } else {
+                        Probe::EvidencePending { collected: evidence, note: format!("telemetry query failed: {}", out.error) }
+                    }
+                },
+                Err(e) => Probe::EvidencePending { collected: evidence, note: format!("telemetry query error: {}", e.message) },
+            }
+        } else if metrics_count == 1 {
+            // 第二块：查次级信号（错误率/延迟面）
+            let r = lookup_metrics(String::from("metrics:"));
+            match r {
+                Ok(out) => {
+                    if out.ok {
+                        evidence.push(Evidence {
+                            kind: String::from("metrics"),
+                            label: String::from("metrics:secondary"),
+                            detail: out.body,
+                        });
+                        Probe::EvidencePending { collected: evidence, note: String::from("collected secondary signal") }
+                    } else {
+                        Probe::EvidencePending { collected: evidence, note: format!("telemetry query failed: {}", out.error) }
+                    }
+                },
+                Err(e) => Probe::EvidencePending { collected: evidence, note: format!("telemetry query error: {}", e.message) },
+            }
+        } else if runbook_count == 0 {
+            // 第三块：runbook 处置手册
+            let r = lookup_runbook(alert.source.clone());
+            match r {
+                Ok(out) => {
+                    if out.ok {
+                        evidence.push(Evidence {
+                            kind: String::from("runbook"),
+                            label: format!("runbook:{}", alert.source),
+                            detail: out.body,
+                        });
+                        Probe::EvidenceReady { evidence }
+                    } else {
+                        Probe::EvidencePending { collected: evidence, note: format!("runbook lookup failed: {}", out.error) }
+                    }
+                },
+                Err(e) => Probe::EvidencePending { collected: evidence, note: format!("runbook lookup error: {}", e.message) },
+            }
+        } else {
+            // 计划耗尽仍被调用（上游循环失控）→ 证据链断裂
+            Probe::EvidenceFailed { reason: String::from("probe plan exhausted with no gap left") }
+        }
+    }
+}
+
+/// 统计某类证据块数（for-in 计数，无迭代器魔法）。
+export fn count_kind(evidence: Vec<Evidence>, kind: String) -> u32 {
+    let mut n: u32 = 0;
+    for ev in evidence {
+        if ev.kind == kind {
+            n += 1;
+        }
+    }
+    n
+}
+
+/// 取假设文本首个关键词（长度 > 3 的词；无则回退到告警标题首词）。
+export fn first_keyword(text: String) -> String {
+    let words = text.split_whitespace().filter(|w| w.len() > 3);
+    let mut picked: String = String::from("");
+    for w in words {
+        picked = w;
+        break;
+    }
+    if picked.len() == 0 {
+        let fallback = text.split_whitespace();
+        for w in fallback {
+            picked = w;
+            break;
+        }
+    }
+    picked.to_lowercase()
+}

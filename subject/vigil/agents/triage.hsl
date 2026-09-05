@@ -1,0 +1,41 @@
+// ============================================================================
+// vigil/agents/triage.hsl — 分诊协议解析（严格 JSON 协议 + 软硬漂移分类）
+// ============================================================================
+// 文法覆盖：HashMap 工具 / if-else if 链 / Result 通道 / String::from 比较
+// ============================================================================
+
+import { Alert } from "../types/alerts.hsl";
+import { Triage } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 模型输出 → Triage。
+/// 硬漂移（非法 JSON）→ Err；软漂移（合法 JSON 但字段不合协议）→ Ok(Retryable)。
+/// 二者都由 graph 侧归类进 Retryable 漂移通道（triager 自环边）。
+export fn parse_triage(raw: String, current: Alert) -> Result<Triage, HarnessError> {
+    let fields: HashMap<String, String> = native typescript {
+        try {
+            return $host.json.fields(raw);
+        } catch (e) {
+            const m = new Map();
+            m.set("error", String(e && e.message || e));
+            return m;
+        }
+    };
+    if fields.contains_key("error") {
+        let detail = fields.get("error").unwrap_or(String::from("?"));
+        return Err(HarnessError::new(String::from("protocol"), format!("分诊输出不是合法 JSON：{}", detail)));
+    }
+    let decision = fields.get("decision").unwrap_or(String::from(""));
+    if decision == String::from("investigate") {
+        let hypothesis = fields.get("hypothesis").unwrap_or(String::from(""));
+        Ok(Triage::Investigate { alert: current, hypothesis })
+    } else if decision == String::from("escalate") {
+        let reason = fields.get("reason").unwrap_or(String::from("(no reason given)"));
+        Ok(Triage::Escalate { alert: current, reason })
+    } else if decision == String::from("retryable") {
+        Ok(Triage::Retryable { note: fields.get("note").unwrap_or(String::from("")) })
+    } else {
+        // 软漂移：字段不合协议但可恢复 → 剧本可以显式声明 retryable 供测试自环边
+        Ok(Triage::Retryable { note: format!("decision 必须是 investigate/escalate，得到 \"{}\"", decision) })
+    }
+}

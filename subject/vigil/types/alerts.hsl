@@ -1,0 +1,86 @@
+// ============================================================================
+// vigil/types/alerts.hsl — 告警 / 证据 / 会话消息 / 收件箱事件（契约层）
+// ============================================================================
+// 文法覆盖：StructDef / EnumDef（命名负载 + 单元变体）/ impl 静态工厂 /
+//           if-else 表达式值 / format! / String 方法链
+// ============================================================================
+
+#[derive(Debug, Clone)]
+export struct Alert {
+    id: String,
+    source: String,      // prometheus / grafana / sentry
+    severity: String,    // critical / warning / info
+    title: String,
+    body: String,
+}
+
+impl Alert {
+    fn render(self) -> String {
+        let mut out = format!("[{}] {} ({})", self.severity, self.title, self.id);
+        out.push_str(" from ");
+        out.push_str(self.source.as_str());
+        out.push_str(": ");
+        out.push_str(self.body.as_str());
+        out
+    }
+}
+
+/// 证据单元：探查阶段收集的最小证据块。
+#[derive(Debug, Clone)]
+export struct Evidence {
+    kind: String,        // metrics / runbook
+    label: String,       // e.g. "metrics:cpu"
+    detail: String,      // 原始读数 / runbook 摘录
+}
+
+/// 会话消息（四角色流，与事件总线产物 transcript.jsonl 对齐）。
+#[derive(Debug, Clone)]
+export struct Message {
+    role: String,
+    content: String,
+}
+
+impl Message {
+    fn system(text: String) -> Message {
+        Message { role: String::from("system"), content: text }
+    }
+
+    fn user(text: String) -> Message {
+        Message { role: String::from("user"), content: text }
+    }
+
+    fn assistant(text: String) -> Message {
+        Message { role: String::from("assistant"), content: text }
+    }
+
+    fn tool(text: String) -> Message {
+        Message { role: String::from("tool"), content: text }
+    }
+}
+
+/// 处置案例（ledger 的提交单元）。
+#[derive(Debug, Clone)]
+export struct CaseRecord {
+    alert_id: String,
+    title: String,
+    disposition: String,   // committed / parked / escalated / drift-abandoned
+    detail: String,
+}
+
+/// 收件箱事件：外层主循环的拉取词汇。
+/// - AlertReceived：下一条告警进入分诊（intake -> triager 边）
+/// - InboxEmpty：收件箱排空，会话收束
+#[derive(Debug, Clone)]
+export enum IntakeEvent {
+    AlertReceived { alert: Alert },
+    InboxEmpty,
+}
+
+/// 提交回环信号：ledger 提交一例后的控制权去向。
+/// - Committed：提交成功 → 控制权回到收件箱拉取下一条（ledger -> intake 边）
+/// - SessionDone：会话级截止（预留扩展点：时间窗截止 / 上游停机）
+#[derive(Debug, Clone)]
+export enum AdvanceSignal {
+    Committed,
+    SessionDone,
+}

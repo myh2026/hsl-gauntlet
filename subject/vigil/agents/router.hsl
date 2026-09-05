@@ -1,0 +1,33 @@
+// ============================================================================
+// vigil/agents/router.hsl — 处置路由（确定性规则：严重度分流）
+// ============================================================================
+// 文法覆盖：if-else 表达式值 / enum 命名负载构造 / format!
+// ============================================================================
+
+import { Alert } from "../types/alerts.hsl";
+import { Route } from "../types/vocab.hsl";
+
+#[derive(Debug, Clone)]
+export struct Router {
+    channel: String,      // 升级通道名（如 "pager"）
+}
+
+impl Router {
+    fn new(channel: String) -> Router {
+        Router { channel }
+    }
+
+    /// 处置路由：critical → 升级（page on-call）；其余 → 停靠（延后处理）。
+    fn route(self, alert: Alert, reason: String) -> Route {
+        if alert.severity == String::from("critical") {
+            Route::Escalated {
+                channel: self.channel.clone(),
+                summary: format!("[{}] {} escalated: {}", alert.severity, alert.title, reason),
+            }
+        } else {
+            Route::Parked {
+                reason: format!("severity={} deferred: {}", alert.severity, reason),
+            }
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+  "tracks": {
+    "inbox": [
+      "{\"id\": \"ALT-001\", \"source\": \"prometheus\", \"severity\": \"warning\", \"title\": \"error rate regression on api-gateway\", \"body\": \"5xx rate climbed from 0.4% to 4.2% after deploy #2841\"}"
+    ],
+    "triage": [
+      "{\"decision\": \"investigate\", \"hypothesis\": \"error rate regression caused by saturation after deploy\"}"
+    ],
+    "synthesize": [
+      "{\"text\": \"Postmortem: api-gateway error rate regressed to 4.2% after deploy #2841. Evidence: error_rate=0.042 with saturation=0.80 on the prometheus snapshot. Impact: SLO burn. Action: rollback deploy #2841 and add a saturation guard.\"}"
+    ],
+    "review": [
+      "{\"verdict\": \"accept\"}"
+    ]
+  }
+}

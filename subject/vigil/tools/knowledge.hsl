@@ -1,0 +1,34 @@
+// ============================================================================
+// vigil/tools/knowledge.hsl — 运维知识库查询（runbook 读取 + 相关段落定位）
+// ============================================================================
+// 文法覆盖：#[capability(file_read)] / String lines()/split_whitespace 方法链 /
+//           for-in 迭代 / mut 计数
+// ============================================================================
+
+import { ToolOutput, cap_chars } from "./telemetry.hsl";
+import { HarnessError } from "../types/errors.hsl";
+
+/// 查 runbook：读取 workspace 下的 runbook.md，返回与告警来源相关的段落。
+/// 故障注入面：fs.read（知识库不可达 → error / 内容损坏 → 半截文本）。
+#[capability(file_read)]
+export fn lookup_runbook(topic: String) -> Result<ToolOutput, HarnessError> {
+    let r = native typescript {
+        const t0 = Date.now();
+        try {
+            const raw = await $host.fs.read("runbook.md");
+            const kw = String(topic).trim();
+            // 定位包含关键词的段落（heading 分割）
+            const sections = raw.split(/^## /m);
+            const hits = sections.filter((s) => kw === "" || s.includes(kw));
+            const body = hits.length > 0 ? hits.join("\n---\n") : "(no matching runbook section)";
+            return { ok: true, body: body, error: "", ms: Date.now() - t0 };
+        } catch (e) {
+            return { ok: false, body: "", error: String(e && e.message || e), ms: Date.now() - t0 };
+        }
+    };
+    if r.ok {
+        Ok(ToolOutput { ok: true, body: cap_chars(r.body, 2_000), error: String::from(""), ms: r.ms })
+    } else {
+        Ok(ToolOutput { ok: false, body: String::from(""), error: r.error, ms: r.ms })
+    }
+}

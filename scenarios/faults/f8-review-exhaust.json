@@ -1,0 +1,18 @@
+{
+  "tracks": {
+    "inbox": [
+      "{\"id\": \"ALT-002\", \"source\": \"sentry\", \"severity\": \"critical\", \"title\": \"auth service down\", \"body\": \"login endpoint returning 503 for all users\"}"
+    ],
+    "triage": [
+      "{\"decision\": \"investigate\", \"hypothesis\": \"error rate regression caused by saturation after deploy\"}"
+    ],
+    "synthesize": [
+      "{\"text\": \"Postmortem: api-gateway error rate regressed to 4.2% after deploy #2841. Evidence: error_rate=0.042 with saturation=0.80 on the prometheus snapshot. Impact: SLO burn. Action: rollback deploy #2841 and add a saturation guard.\"}",
+      "{\"text\": \"Postmortem (rev 2): root cause was saturation after deploy #2841. Evidence: error_rate=0.042, saturation=0.80. Impact: SLO burn for 40 minutes. Action: rolled back deploy #2841; saturation guard added to CI.\"}"
+    ],
+    "review": [
+      "{\"verdict\": \"reject\", \"note\": \"must cite two concrete metric signals\"}",
+      "{\"verdict\": \"reject\", \"note\": \"must cite two concrete metric signals\"}"
+    ]
+  }
+}

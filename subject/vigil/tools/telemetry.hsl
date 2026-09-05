@@ -1,0 +1,63 @@
+// ============================================================================
+// vigil/tools/telemetry.hsl — 遥测查询工具（fs 路径监狱 + 输出封顶）
+// ============================================================================
+// 文法覆盖：#[capability(file_read)] / native try-catch 结构化结果 /
+//           String 方法链（chars().take().collect::<String>()）
+// ============================================================================
+
+import { HarnessError } from "../types/errors.hsl";
+
+/// 工具输出（ok=false 携带错误语义而非抛错 —— 失败是值，不是异常）。
+#[derive(Debug, Clone)]
+export struct ToolOutput {
+    ok: bool,
+    body: String,
+    error: String,
+    ms: u64,
+}
+
+/// 输出封顶（纯 HSL 字符串工程）。
+export fn cap_chars(text: String, cap: u32) -> String {
+    if text.len() <= cap {
+        text
+    } else {
+        let head = text.chars().take(cap).collect::<String>();
+        let mut out = head;
+        out.push_str("\n... [truncated ");
+        out.push_str((text.len() - cap).to_string().as_str());
+        out.push_str(" chars]");
+        out
+    }
+}
+
+/// 查询遥测快照：读 workspace 下的 metrics.json，按信号关键词聚焦渲染。
+/// 故障注入面：fs.read（遥测端宕机 → error / 返回损坏数据 → 半截 body）。
+#[capability(file_read)]
+export fn lookup_metrics(query: String) -> Result<ToolOutput, HarnessError> {
+    let r = native typescript {
+        const t0 = Date.now();
+        try {
+            const raw = await $host.fs.read("metrics.json");
+            const parsed = $host.json.parse(raw);
+            // 只保留与查询关键词相关的信号（关键词 = query 去掉 "metrics:" 前缀）
+            const kw = String(query).replace("metrics:", "").trim();
+            const hits = {};
+            for (const [k, v] of Object.entries(parsed)) {
+                if (kw === "" || String(k).includes(kw) || String(v).includes(kw)) {
+                    hits[k] = v;
+                }
+            }
+            const body = Object.keys(hits).length > 0
+                ? Object.entries(hits).map(([k, v]) => `${k}=${v}`).join(" ")
+                : "(no matching signals)";
+            return { ok: true, body: body, error: "", ms: Date.now() - t0 };
+        } catch (e) {
+            return { ok: false, body: "", error: String(e && e.message || e), ms: Date.now() - t0 };
+        }
+    };
+    if r.ok {
+        Ok(ToolOutput { ok: true, body: r.body, error: String::from(""), ms: r.ms })
+    } else {
+        Ok(ToolOutput { ok: false, body: String::from(""), error: r.error, ms: r.ms })
+    }
+}

@@ -1,0 +1,10 @@
+{
+  "tracks": {
+    "inbox": [
+      "{\"id\": \"ALT-002\", \"source\": \"sentry\", \"severity\": \"critical\", \"title\": \"auth service down\", \"body\": \"login endpoint returning 503 for all users\"}"
+    ],
+    "triage": [
+      "{\"decision\": \"escalate\", \"reason\": \"auth service fully down, needs human intervention now\"}"
+    ]
+  }
+}

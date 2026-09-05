@@ -1,0 +1,75 @@
+// ============================================================================
+// vigil/types/vocab.hsl — 边守卫词汇层（拓扑 17 条边的全部 Guard 枚举）
+// ============================================================================
+// 设计纪律（Gauntlet 唯一守卫纪律 unique-guard discipline）：
+//   每条边的 Guard 变体名在整个 graph 内唯一 —— 事件总线按「变体名」匹配
+//   match 臂与 edge 声明（interp.traceEdgeFire），重名守卫会产生边发射别名，
+//   使 edge 覆盖率不可判定。本文件所有变体名全局唯一，一一对应 17 条边。
+// ============================================================================
+
+/// 分诊词汇（triager 输出）—— 3 条边：
+///   triager -> investigator on Investigate
+///   triager -> router        on Escalate
+///   triager -> triager       on Retryable（协议漂移自环）
+#[derive(Debug, Clone)]
+export enum Triage {
+    Investigate { alert: Alert, hypothesis: String },
+    Escalate { alert: Alert, reason: String },
+    Retryable { note: String },
+}
+
+/// 探查词汇（investigator 输出）—— 3 条边：
+///   investigator -> critic        on EvidenceReady
+///   investigator -> investigator  on EvidencePending（证据尚不完备自环）
+///   investigator -> router        on EvidenceFailed（证据链断裂）
+#[derive(Debug, Clone)]
+export enum Probe {
+    EvidenceReady { evidence: Vec<Evidence> },
+    EvidencePending { collected: Vec<Evidence>, note: String },
+    EvidenceFailed { reason: String },
+}
+
+/// 证据审查词汇（critic 输出）—— 2 条边：
+///   critic -> synthesizer   on Sound
+///   critic -> investigator  on Insufficient（证据不足回环）
+#[derive(Debug, Clone)]
+export enum Critique {
+    Sound { covered: String },
+    Insufficient { need: String },
+}
+
+/// 草稿词汇（synthesizer 输出）—— 1 条边：
+///   synthesizer -> reviewer on Submitted
+#[derive(Debug, Clone)]
+export enum Draft {
+    Submitted { text: String },
+}
+
+/// 审计裁决词汇（reviewer 输出）—— 2 条边：
+///   reviewer -> ledger      on Accepted
+///   reviewer -> synthesizer on Rejected（返工回环）
+#[derive(Debug, Clone)]
+export enum Verdict {
+    Accepted,
+    Rejected { note: String },
+}
+
+/// 处置路由词汇（router 输出）—— 2 条边：
+///   router -> ledger on Parked
+///   router -> ledger on Escalated
+#[derive(Debug, Clone)]
+export enum Route {
+    Parked { reason: String },
+    Escalated { channel: String, summary: String },
+}
+
+/// 预算信号词汇（budget 状态）—— 2 条边：
+///   budget -> router  on Exhausted（预算耗尽 → 停靠收束）
+///   budget -> triager on DriftWarn（漂移预算告警 → 协议提醒注入）
+/// Within 不挂边（无转移语义）。
+#[derive(Debug, Clone)]
+export enum BudgetSignal {
+    Exhausted,
+    DriftWarn,
+    Within,
+}

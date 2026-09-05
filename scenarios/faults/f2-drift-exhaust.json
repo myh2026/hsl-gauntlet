@@ -1,0 +1,13 @@
+{
+  "tracks": {
+    "inbox": [
+      "{\"id\": \"ALT-001\", \"source\": \"prometheus\", \"severity\": \"warning\", \"title\": \"error rate regression on api-gateway\", \"body\": \"5xx rate climbed from 0.4% to 4.2% after deploy #2841\"}"
+    ],
+    "triage": [
+      "garbage one",
+      "garbage two",
+      "garbage three",
+      "garbage four"
+    ]
+  }
+}

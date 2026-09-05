@@ -1,0 +1,504 @@
+// ============================================================================
+// vigil/vigil.hsl — 入口：Vigil 主编排 graph + main + 投射声明
+// ============================================================================
+// 拓扑（9 节点 / 17 边 / 5 守卫环）：
+//
+//   [budget] ──Exhausted──► [router]          [budget] ──DriftWarn──► [triager]
+//   [intake] ─AlertReceived► [triager]        [ledger] ──Committed──► [intake]
+//   [triager] ─Investigate─► [investigator]   [triager] ─Escalate───► [router]
+//   [triager] ─Retryable──► [triager]（自环） [investigator] ─EvidencePending─► [investigator]（自环）
+//   [investigator] ─EvidenceReady─► [critic]  [investigator] ─EvidenceFailed──► [router]
+//   [critic] ─Sound───────► [synthesizer]     [critic] ─Insufficient─► [investigator]
+//   [synthesizer] ─Submitted─► [reviewer]     [reviewer] ─Accepted──► [ledger]
+//   [reviewer] ─Rejected──► [synthesizer]     [router] ─Parked/Escalated─► [ledger]
+//
+// 唯一守卫纪律：17 条边的 Guard 变体名全局唯一（见 types/vocab.hsl）。
+// 文法覆盖：graph mut 参数 / node mut / 条件边环 / AgentLoop 穷尽 match /
+//           macro_rules! bump / GraphName::run / project + scale
+// ============================================================================
+
+import { Alert, Evidence, Message, CaseRecord, IntakeEvent, AdvanceSignal } from "./types/alerts.hsl";
+import { Triage, Probe, Critique, Draft, Verdict, Route, BudgetSignal } from "./types/vocab.hsl";
+import { Policy, Budget, SessionState, SessionStats, RunReport } from "./types/state.hsl";
+import { HarnessError } from "./types/errors.hsl";
+import { ModelPort, make_port } from "./providers/model.hsl";
+import { AlertLog, load_inbox } from "./agents/intake.hsl";
+import { parse_triage } from "./agents/triage.hsl";
+import { Investigator } from "./agents/investigator.hsl";
+import { Critic } from "./agents/critic.hsl";
+import { parse_draft, parse_verdict, Ledger } from "./agents/scribe.hsl";
+import { Router } from "./agents/router.hsl";
+import { TRIAGE_PROMPT, SYNTH_PROMPT, REVIEW_RUBRIC, HARNESS_CONFIG, EVENTS_SCHEMA } from "./config/resources.hsl";
+
+macro_rules! bump {
+    ($field:expr, $by:expr) => { $field += $by; };
+}
+
+// ============================================================================
+// 消息装配（prompt 组装全部在 HSL 侧 —— N1 纪律）
+// ============================================================================
+
+fn triage_messages(alert: Alert) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(TRIAGE_PROMPT));
+    msgs.push(Message::user(alert.render()));
+    msgs
+}
+
+fn synth_messages(alert: Alert, hypothesis: String, evidence: Vec<Evidence>, reject_note: String) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(SYNTH_PROMPT));
+    let mut body = String::from("alert: ");
+    body.push_str(alert.render().as_str());
+    body.push_str("\nhypothesis: ");
+    body.push_str(hypothesis.as_str());
+    body.push_str("\nevidence:\n");
+    for ev in evidence {
+        body.push_str("- ");
+        body.push_str(ev.kind.as_str());
+        body.push_str(" | ");
+        body.push_str(ev.label.as_str());
+        body.push_str(" | ");
+        body.push_str(ev.detail.as_str());
+        body.push_str("\n");
+    }
+    if reject_note.len() > 0 {
+        body.push_str("\nreviewer note (fix this): ");
+        body.push_str(reject_note.as_str());
+    }
+    msgs.push(Message::user(body));
+    msgs
+}
+
+fn review_messages(draft: String) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(REVIEW_RUBRIC));
+    msgs.push(Message::user(draft));
+    msgs
+}
+
+// ============================================================================
+// 主编排 graph：SRE 告警分诊会话状态机
+// ============================================================================
+
+graph Vigil(mut state: SessionState) -> Result<RunReport, HarnessError> {
+    // ---- 9 节点（顶点 = 可执行单元；budget 为本地可变顶点）----
+    node intake: AlertLog = AlertLog::new(state.inbox.clone())?;
+    node triager: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("triage"))?;
+    node investigator: Investigator = Investigator::new(state.policy.clone());
+    node critic: Critic = Critic::new(String::from("evidence-coverage"));
+    node synthesizer: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("synthesize"))?;
+    node reviewer: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("review"))?;
+    node router: Router = Router::new(String::from("pager"));
+    node ledger: Ledger = Ledger::new(String::from("vigil-run"));
+    node mut budget: Budget = Budget::zero();
+
+    // ---- 17 条边（Guard 变体全局唯一 —— Gauntlet 唯一守卫纪律）----
+    edge intake -> triager on IntakeEvent::AlertReceived;
+    edge triager -> investigator on Triage::Investigate;
+    edge triager -> router on Triage::Escalate;
+    edge triager -> triager on Triage::Retryable;
+    edge investigator -> investigator on Probe::EvidencePending;
+    edge investigator -> critic on Probe::EvidenceReady;
+    edge investigator -> router on Probe::EvidenceFailed;
+    edge critic -> synthesizer on Critique::Sound;
+    edge critic -> investigator on Critique::Insufficient;
+    edge synthesizer -> reviewer on Draft::Submitted;
+    edge reviewer -> ledger on Verdict::Accepted;
+    edge reviewer -> synthesizer on Verdict::Rejected;
+    edge router -> ledger on Route::Parked;
+    edge router -> ledger on Route::Escalated;
+    edge budget -> router on BudgetSignal::Exhausted;
+    edge budget -> triager on BudgetSignal::DriftWarn;
+    edge ledger -> intake on AdvanceSignal::Committed;
+
+    let mut cases: Vec<CaseRecord> = Vec::new();
+    let mut session_verdict: String = String::from("inbox-drained");
+
+    // ---- AgentLoop：外层 = 告警拉取回环 ----
+    loop {
+        // 预算闸门（budget -> router on Exhausted / budget -> triager on DriftWarn）
+        match budget.clone().status(state.policy.clone()) {
+            BudgetSignal::Exhausted => {
+                let synthetic = Alert {
+                    id: String::from("(session)"),
+                    source: String::from("budget"),
+                    severity: String::from("warning"),
+                    title: String::from("turn budget exhausted"),
+                    body: String::from(""),
+                };
+                let parked = router.clone().route(synthetic, String::from("turn budget exhausted"));
+                match parked {
+                    Route::Parked { reason } => {
+                        bump!(state.stats.parked, 1);
+                        cases.push(CaseRecord {
+                            alert_id: String::from("(session)"),
+                            title: String::from("turn budget exhausted"),
+                            disposition: String::from("parked"),
+                            detail: reason,
+                        });
+                    },
+                    Route::Escalated { channel: _channel, summary } => {
+                        bump!(state.stats.escalated, 1);
+                        cases.push(CaseRecord {
+                            alert_id: String::from("(session)"),
+                            title: String::from("turn budget exhausted"),
+                            disposition: String::from("escalated"),
+                            detail: summary,
+                        });
+                    },
+                }
+                session_verdict = String::from("budget-exhausted");
+                break;
+            },
+            BudgetSignal::DriftWarn => {
+                if state.drift_noted == false {
+                    state.transcript.push(Message::system(String::from("[budget] 协议漂移预算告警：请严格按 JSON 协议输出")));
+                    state.drift_noted = true;
+                }
+            },
+            BudgetSignal::Within => {},
+        }
+
+        // 收件箱（intake -> triager on AlertReceived）
+        match intake.clone().poll(state.inbox_idx) {
+            IntakeEvent::AlertReceived { alert } => {
+                bump!(state.stats.alerts_seen, 1);
+                bump!(budget.turns_used, 1);
+                state.transcript.push(Message::user(alert.clone().render()));
+
+                // ---- 分诊 ----
+                let triage_raw = triager.clone().act(triage_messages(alert.clone())).await?;
+                state.transcript.push(Message::assistant(triage_raw.clone()));
+                let triage = match parse_triage(triage_raw, alert.clone()) {
+                    Ok(t) => t,
+                    Err(e) => Triage::Retryable { note: e.message },
+                };
+                match triage {
+                    Triage::Investigate { alert: a, hypothesis } => {
+                        // ---- 探查-审查外循环（EvidencePending 自环 + Insufficient 回环）----
+                        let mut evidence: Vec<Evidence> = Vec::new();
+                        let mut attempts: u32 = 0;
+                        let mut dead: String = String::from("");
+                        let mut sound: bool = false;
+                        let mut covered_note: String = String::from("");
+                        while !sound && dead.len() == 0 && attempts <= state.policy.max_probe {
+                            let probe = investigator.clone().probe_once(a.clone(), hypothesis.clone(), evidence.clone());
+                            match probe {
+                                Probe::EvidenceReady { evidence: ev } => {
+                                    evidence = ev;
+                                    let critique = critic.clone().assess(evidence.clone(), hypothesis.clone());
+                                    match critique {
+                                        Critique::Sound { covered } => {
+                                            sound = true;
+                                            covered_note = covered;
+                                        },
+                                        Critique::Insufficient { need } => {
+                                            bump!(state.stats.insufficient, 1);
+                                            attempts += 1;
+                                            state.transcript.push(Message::tool(format!("[critic] 证据不足：{}", need)));
+                                        },
+                                    }
+                                },
+                                Probe::EvidencePending { collected: ev, note } => {
+                                    evidence = ev;
+                                    attempts += 1;
+                                    state.transcript.push(Message::tool(format!("[probe] {}", note)));
+                                },
+                                Probe::EvidenceFailed { reason } => {
+                                    dead = reason;
+                                },
+                            }
+                        }
+                        if !sound && dead.len() == 0 {
+                            // 探查/审查预算耗尽 → 降级为证据链断裂
+                            //（S6 防御穷尽：前两臂不可达，语言强制直面词汇演化）
+                            let degraded = Probe::EvidenceFailed { reason: String::from("investigation budget exhausted") };
+                            match degraded {
+                                Probe::EvidenceReady { evidence: ev } => { evidence = ev; },
+                                Probe::EvidencePending { collected: ev, note: _ } => { evidence = ev; },
+                                Probe::EvidenceFailed { reason } => { dead = reason; },
+                            }
+                        }
+
+                        if dead.len() > 0 {
+                            // 证据链断裂 → 路由处置（investigator -> router on EvidenceFailed）
+                            bump!(state.stats.probe_failures, 1);
+                            let routed = router.clone().route(a.clone(), format!("evidence chain broken: {}", dead));
+                            match routed {
+                                Route::Parked { reason } => {
+                                    bump!(state.stats.parked, 1);
+                                    cases.push(CaseRecord {
+                                        alert_id: a.id.clone(),
+                                        title: a.title.clone(),
+                                        disposition: String::from("parked"),
+                                        detail: reason,
+                                    });
+                                },
+                                Route::Escalated { channel: _channel, summary } => {
+                                    bump!(state.stats.escalated, 1);
+                                    cases.push(CaseRecord {
+                                        alert_id: a.id.clone(),
+                                        title: a.title.clone(),
+                                        disposition: String::from("escalated"),
+                                        detail: summary,
+                                    });
+                                },
+                            }
+                            bump!(state.inbox_idx, 1);
+                        } else {
+                            // ---- 综合-审计内循环（Rejected 回环 + 草稿协议纠错）----
+                            let mut rounds: u32 = 0;
+                            let mut accepted: bool = false;
+                            let mut reject_note: String = String::from("");
+                            let mut draft_text: String = String::from("");
+                            while !accepted && rounds < state.policy.max_rounds {
+                                let synth_raw = synthesizer.clone().act(synth_messages(a.clone(), hypothesis.clone(), evidence.clone(), reject_note.clone())).await?;
+                                state.transcript.push(Message::assistant(synth_raw.clone()));
+                                let draft = match parse_draft(synth_raw) {
+                                    Ok(d) => d,
+                                    Err(e) => {
+                                        bump!(state.stats.drift_retries, 1);
+                                        reject_note = e.message;
+                                        rounds += 1;
+                                        continue;
+                                    },
+                                };
+                                match draft {
+                                    Draft::Submitted { text } => {
+                                        draft_text = text;
+                                        let review_raw = reviewer.clone().act(review_messages(draft_text.clone())).await?;
+                                        state.transcript.push(Message::assistant(review_raw.clone()));
+                                        let verdict = match parse_verdict(review_raw) {
+                                            Ok(v) => v,
+                                            Err(e) => {
+                                                bump!(state.stats.drift_retries, 1);
+                                                reject_note = e.message;
+                                                rounds += 1;
+                                                continue;
+                                            },
+                                        };
+                                        match verdict {
+                                            Verdict::Accepted => {
+                                                accepted = true;
+                                            },
+                                            Verdict::Rejected { note } => {
+                                                bump!(state.stats.rejections, 1);
+                                                reject_note = note;
+                                                state.transcript.push(Message::tool(format!("[review] 返工：{}", note)));
+                                                rounds += 1;
+                                            },
+                                        }
+                                    },
+                                }
+                            }
+
+                            if accepted {
+                                // 提交（reviewer -> ledger on Accepted；ledger -> intake on Committed）
+                                let record = CaseRecord {
+                                    alert_id: a.id.clone(),
+                                    title: a.title.clone(),
+                                    disposition: String::from("committed"),
+                                    detail: draft_text.clone(),
+                                };
+                                match ledger.clone().commit_case(record.clone()) {
+                                    AdvanceSignal::Committed => {
+                                        cases.push(record);
+                                        bump!(state.stats.committed, 1);
+                                    },
+                                    AdvanceSignal::SessionDone => {
+                                        // 预留扩展点：时间窗截止（当前不会触发）
+                                    },
+                                }
+                                bump!(state.inbox_idx, 1);
+                            } else {
+                                // 审稿预算耗尽 → 路由升级（草稿无法通过审计）
+                                let routed = router.clone().route(a.clone(), format!("postmortem could not pass review in {} rounds: {}", state.policy.max_rounds, reject_note));
+                                match routed {
+                                    Route::Parked { reason } => {
+                                        bump!(state.stats.parked, 1);
+                                        cases.push(CaseRecord {
+                                            alert_id: a.id.clone(),
+                                            title: a.title.clone(),
+                                            disposition: String::from("parked"),
+                                            detail: reason,
+                                        });
+                                    },
+                                    Route::Escalated { channel: _channel, summary } => {
+                                        bump!(state.stats.escalated, 1);
+                                        cases.push(CaseRecord {
+                                            alert_id: a.id.clone(),
+                                            title: a.title.clone(),
+                                            disposition: String::from("escalated"),
+                                            detail: summary,
+                                        });
+                                    },
+                                }
+                                bump!(state.inbox_idx, 1);
+                            }
+                        }
+                    },
+                    Triage::Escalate { alert: a, reason } => {
+                        // 分诊即升级（triager -> router on Escalate）
+                        let routed = router.clone().route(a.clone(), reason.clone());
+                        match routed {
+                            Route::Parked { reason: r } => {
+                                bump!(state.stats.parked, 1);
+                                cases.push(CaseRecord {
+                                    alert_id: a.id.clone(),
+                                    title: a.title.clone(),
+                                    disposition: String::from("parked"),
+                                    detail: r,
+                                });
+                            },
+                            Route::Escalated { channel: _channel, summary } => {
+                                bump!(state.stats.escalated, 1);
+                                cases.push(CaseRecord {
+                                    alert_id: a.id.clone(),
+                                    title: a.title.clone(),
+                                    disposition: String::from("escalated"),
+                                    detail: summary,
+                                });
+                            },
+                        }
+                        bump!(state.inbox_idx, 1);
+                    },
+                    Triage::Retryable { note } => {
+                        // 协议漂移自环（triager -> triager on Retryable）
+                        bump!(budget.drift_count, 1);
+                        bump!(state.stats.drift_retries, 1);
+                        state.transcript.push(Message::tool(format!("[protocol] 漂移：{}", note)));
+                        // 双阈值：drift_count >= max_drift → DriftWarn（预算节点提醒）；
+                        //          drift_count >= 2*max_drift → 放弃本告警（硬上限）
+                        if budget.drift_count >= state.policy.max_drift * 2 {
+                            // 漂移硬上限 → 放弃本告警（路由停靠）
+                            let abandoned = router.clone().route(alert.clone(), format!("triage protocol drift exhausted: {}", note));
+                            match abandoned {
+                                Route::Parked { reason } => {
+                                    bump!(state.stats.parked, 1);
+                                    cases.push(CaseRecord {
+                                        alert_id: alert.id.clone(),
+                                        title: alert.title.clone(),
+                                        disposition: String::from("parked"),
+                                        detail: reason,
+                                    });
+                                },
+                                Route::Escalated { channel: _channel, summary } => {
+                                    bump!(state.stats.escalated, 1);
+                                    cases.push(CaseRecord {
+                                        alert_id: alert.id.clone(),
+                                        title: alert.title.clone(),
+                                        disposition: String::from("escalated"),
+                                        detail: summary,
+                                    });
+                                },
+                            }
+                            bump!(state.inbox_idx, 1);
+                        } else {
+                            state.transcript.push(Message::user(String::from("你的上一条输出违反了协议。请重新输出恰好一个 JSON 对象（decision 字段按系统提示词的格式）。")));
+                        }
+                    },
+                }
+            },
+            IntakeEvent::InboxEmpty => {
+                break;
+            },
+        }
+    }
+
+    let ok = session_verdict == String::from("inbox-drained");
+    Ok(RunReport {
+        task: state.policy.task.clone(),
+        verdict: session_verdict,
+        cases: cases.clone(),
+        stats: state.stats.clone(),
+        transcript: state.transcript.clone(),
+        ok,
+    })
+}
+
+// ============================================================================
+// 入口与产物
+// ============================================================================
+
+export fn main() -> Result<(), HarnessError> {
+    let policy = Policy::from_config()?;
+    let mut opening: Vec<Message> = Vec::new();
+    opening.push(Message::system(String::from("Vigil session opening")));
+    opening.push(Message::user(format!("workspace: {}\ndirective: {}", policy.workspace, policy.task)));
+    let state = SessionState {
+        policy: policy.clone(),
+        transcript: opening,
+        stats: SessionStats::zero(),
+        inbox: load_inbox(),
+        inbox_idx: 0,
+        drift_noted: false,
+    };
+    let report = Vigil::run(state)?;
+    write_artifacts(report, policy)
+}
+
+fn write_artifacts(report: RunReport, policy: Policy) -> Result<(), HarnessError> {
+    let report_md = render_report(report.clone(), policy);
+    let transcript_jsonl: String = native typescript {
+        const lines = report.transcript.map((m) => JSON.stringify({ role: m.role, content: m.content }));
+        return lines.join("\n") + "\n";
+    };
+    let cases_jsonl: String = native typescript {
+        const lines = report.cases.map((c) => JSON.stringify({ alert_id: c.alert_id, title: c.title, disposition: c.disposition, detail: c.detail }));
+        return lines.join("\n") + "\n";
+    };
+    native typescript {
+        $host.artifacts.write("report.md", report_md);
+        $host.artifacts.write("transcript.jsonl", transcript_jsonl);
+        $host.artifacts.write("cases.jsonl", cases_jsonl);
+        return true;
+    };
+    println!("[vigil] artifacts written: report.md / transcript.jsonl / cases.jsonl");
+    Ok(())
+}
+
+fn render_report(report: RunReport, policy: Policy) -> String {
+    let mut out = String::from("# Vigil Run Report\n\n");
+    out.push_str("## 任务\n\n");
+    out.push_str(policy.task.as_str());
+    out.push_str("\n\n## 结果\n\n");
+    out.push_str(format!("- verdict: {}\n", report.verdict).as_str());
+    out.push_str(format!("- ok: {}\n", report.ok).as_str());
+    out.push_str("\n## 会话统计\n\n");
+    out.push_str(format!("- alerts_seen: {}\n", report.stats.alerts_seen).as_str());
+    out.push_str(format!("- committed: {}\n", report.stats.committed).as_str());
+    out.push_str(format!("- parked: {}\n", report.stats.parked).as_str());
+    out.push_str(format!("- escalated: {}\n", report.stats.escalated).as_str());
+    out.push_str(format!("- drift_retries: {}\n", report.stats.drift_retries).as_str());
+    out.push_str(format!("- probe_failures: {}\n", report.stats.probe_failures).as_str());
+    out.push_str(format!("- rejections: {}\n", report.stats.rejections).as_str());
+    out.push_str(format!("- insufficient: {}\n", report.stats.insufficient).as_str());
+    out.push_str("\n## 处置案例\n\n");
+    for c in report.cases {
+        out.push_str("- ");
+        out.push_str(c.alert_id.as_str());
+        out.push_str(" -> ");
+        out.push_str(c.disposition.as_str());
+        out.push_str(" (");
+        out.push_str(c.detail.as_str());
+        out.push_str(")\n");
+    }
+    out
+}
+
+scale = microkernel;
+
+project {
+    Vigil          -> "src/vigil/main.py"           : python,
+    Investigator   -> "src/vigil/investigator.py"   : python,
+    TRIAGE_PROMPT  -> ".harness/TRIAGE.md"          : markdown,
+    HARNESS_CONFIG -> "config/harness.yml"          : yaml,
+    EVENTS_SCHEMA  -> "config/events.schema.json"   : json,
+
+    rules {
+        struct -> "src/types/{name}.py" : python,
+        enum   -> "src/vocab/{name}.py" : python,
+        fn     -> "src/logic/{name}.py" : python,
+    }
+}

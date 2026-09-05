@@ -1,0 +1,49 @@
+// ============================================================================
+// vigil/agents/critic.hsl — 证据审查闸门（确定性规则，非 LLM）
+// ============================================================================
+// 设计要点：harness 中不是每个节点都该是模型 —— 审查闸门用确定性规则，
+// 这是可验证性的锚点（变异分析在此有明确的杀死语义）。
+// 文法覆盖：split_whitespace + filter 闭包 / for-in 双层循环 / mut 计数 /
+//           if-else if 链 / enum 构造
+// ============================================================================
+
+import { Evidence } from "../types/alerts.hsl";
+import { Critique } from "../types/vocab.hsl";
+
+#[derive(Debug, Clone)]
+export struct Critic {
+    rubric: String,
+}
+
+impl Critic {
+    fn new(rubric: String) -> Critic {
+        Critic { rubric }
+    }
+
+    /// 证据充分性评估：
+    ///   Sound        —— ≥2 块 metrics 且至少一块引用了假设关键词信号
+    ///   Insufficient —— 证据数量/覆盖面不足，携带具体缺口说明回调查员
+    fn assess(self, evidence: Vec<Evidence>, hypothesis: String) -> Critique {
+        let mut metrics_total: u32 = 0;
+        let mut covering: u32 = 0;
+        let keywords = hypothesis.split_whitespace().filter(|w| w.len() > 3);
+        for ev in evidence.clone() {
+            if ev.kind == String::from("metrics") {
+                metrics_total += 1;
+                for kw in keywords.clone() {
+                    if ev.detail.contains(kw.clone().to_lowercase()) {
+                        covering += 1;
+                        break;
+                    }
+                }
+            }
+        }
+        if metrics_total >= 2 && covering >= 1 {
+            Critique::Sound { covered: format!("{} metric signal(s) covering the hypothesis", covering) }
+        } else if metrics_total < 2 {
+            Critique::Insufficient { need: String::from("two independent metric signals") }
+        } else {
+            Critique::Insufficient { need: String::from("evidence must cite the hypothesis signal keyword") }
+        }
+    }
+}
