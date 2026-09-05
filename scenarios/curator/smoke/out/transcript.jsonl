@@ -1,0 +1,5 @@
+{"role":"system","content":"Curator session opening"}
+{"role":"user","content":"workspace: /home/z/my-project/hsl-gauntlet/scenarios/curator/nominal/ws-cn1\ndirective: gauntlet:cn1-smoke"}
+{"role":"user","content":"doc DOC-001 | wiki | observability platform migration\nThe platform team migrated the observability stack to a new architecture. Ada Lovelace led the migration for Acme Corp completed on 2026-08-14 with error rate held at 0.42%."}
+{"role":"assistant","content":"{\"entities\": [{\"kind\": \"person\", \"value\": \"Ada Lovelace\", \"confidence\": 0.92}, {\"kind\": \"org\", \"value\": \"Acme Corp\", \"confidence\": 0.88}]}"}
+{"role":"assistant","content":"{\"summary\": \"Ada Lovelace led Acme Corp observability migration on 2026-08-14 with error rate held at 0.42%.\", \"topics\": [\"observability\", \"migration\"]}"}

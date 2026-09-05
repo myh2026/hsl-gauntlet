@@ -1,0 +1,38 @@
+// ============================================================================
+// curator/agents/schema_gate.hsl — 模式闸：文档结构完备性检查（确定性节点）
+// ============================================================================
+// 文法覆盖：impl 方法返回 enum / if-else 表达式 / String 方法链（len）
+// ============================================================================
+
+import { Doc } from "../types/docs.hsl";
+import { SchemaEvent } from "../types/vocab.hsl";
+
+/// 模式闸节点：文档进入抽取前的结构完备性门（纯 HSL，无模型、无工具 ——
+/// 结构失败是确定性的，不消耗模型轮次）。
+#[derive(Debug, Clone)]
+export struct SchemaGate {
+    min_body: u32,
+}
+
+impl SchemaGate {
+    fn new() -> SchemaGate {
+        SchemaGate { min_body: 30 }
+    }
+
+    /// 结构检查：id 非空 ∧ title 非空 ∧ body 达到最小长度。
+    fn check(self, doc: Doc) -> SchemaEvent {
+        let mut reason = String::from("");
+        if doc.id.len() == 0 {
+            reason = String::from("doc id is empty");
+        } else if doc.title.len() == 0 {
+            reason = String::from("doc title is empty");
+        } else if doc.body.len() < self.min_body {
+            reason = format!("doc body too short: {} < {} chars", doc.body.len(), self.min_body);
+        }
+        if reason.len() == 0 {
+            SchemaEvent::SchemaPassed { doc }
+        } else {
+            SchemaEvent::SchemaFailed { doc, reason }
+        }
+    }
+}

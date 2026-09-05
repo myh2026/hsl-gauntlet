@@ -45,7 +45,9 @@ export interface GoldenExpectation {
   exit: number;
   ok: boolean;
   verdict: string;
-  dispositions: { committed: number; parked: number; escalated: number };
+  /** 处置计数（键为各 SUT 自定义的处置词汇，如 committed/parked/escalated
+   *  或 published/quarantined/deferred —— 多 SUT 泛化：框架不再硬编码三元组） */
+  dispositions: Record<string, number>;
   /** 期望触发的故障注入事件数（fault 场景） */
   faultEvents: number;
   /** 期望 capability_denied 事件数 */
@@ -58,7 +60,8 @@ export interface RunOutcome {
   exitCode: number;
   ok: boolean;
   verdict: string;
-  dispositions: { committed: number; parked: number; escalated: number };
+  /** 处置计数（动态键 —— 与黄金预期同构比对） */
+  dispositions: Record<string, number>;
   /** edge 事件守卫序列（有序 multiset） */
   edgeSeq: string[];
   /** edge 事件全身份序列 from->to:on（拓扑签名） */
@@ -77,7 +80,7 @@ export interface MutantSpec {
   id: string;
   operator: string;
   description: string;
-  /** 相对 subject/vigil 的目标文件 */
+  /** 相对 subjectDir 的目标文件（如 "vigil.hsl" / "agents/router.hsl"） */
   file: string;
   find: string;
   replace: string;

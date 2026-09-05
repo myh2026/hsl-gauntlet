@@ -1,0 +1,8 @@
+{
+  "ts": "2026-09-05T04:30:42.166Z",
+  "ok": true,
+  "elapsed_ms": 40,
+  "model": "scripted",
+  "task": "gauntlet:cn1-smoke",
+  "events": 16
+}

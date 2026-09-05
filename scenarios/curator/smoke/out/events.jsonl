@@ -1,0 +1,16 @@
+{"seq":0,"ts":"2026-09-05T04:30:42.125Z","name":"run_start","data":{"entry":"/home/z/my-project/hsl-gauntlet/subject/curator/curator.hsl","model":"scripted","task":"gauntlet:cn1-smoke","scale":"microkernel"}}
+{"seq":1,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"intake","initialized":true}}
+{"seq":2,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"schema_gate","initialized":true}}
+{"seq":3,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"extractor","initialized":true}}
+{"seq":4,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"validator","initialized":true}}
+{"seq":5,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"enricher","initialized":true}}
+{"seq":6,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"publisher","initialized":true}}
+{"seq":7,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"quarantine","initialized":true}}
+{"seq":8,"ts":"2026-09-05T04:30:42.154Z","name":"node","data":{"graph":"Curator","node":"budget","initialized":true}}
+{"seq":9,"ts":"2026-09-05T04:30:42.156Z","name":"edge","data":{"graph":"Curator","from":"intake","to":"schema_gate","on":"DocumentReceived","scale":"microkernel"}}
+{"seq":10,"ts":"2026-09-05T04:30:42.157Z","name":"edge","data":{"graph":"Curator","from":"schema_gate","to":"extractor","on":"SchemaPassed","scale":"microkernel"}}
+{"seq":11,"ts":"2026-09-05T04:30:42.159Z","name":"edge","data":{"graph":"Curator","from":"extractor","to":"validator","on":"EntitiesExtracted","scale":"microkernel"}}
+{"seq":12,"ts":"2026-09-05T04:30:42.160Z","name":"edge","data":{"graph":"Curator","from":"validator","to":"enricher","on":"EntitiesValid","scale":"microkernel"}}
+{"seq":13,"ts":"2026-09-05T04:30:42.161Z","name":"edge","data":{"graph":"Curator","from":"enricher","to":"publisher","on":"EnrichmentComplete","scale":"microkernel"}}
+{"seq":14,"ts":"2026-09-05T04:30:42.162Z","name":"edge","data":{"graph":"Curator","from":"publisher","to":"intake","on":"Published","scale":"microkernel"}}
+{"seq":15,"ts":"2026-09-05T04:30:42.165Z","name":"run_end","data":{"elapsed_ms":40,"ok":true}}

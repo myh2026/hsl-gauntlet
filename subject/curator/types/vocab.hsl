@@ -1,0 +1,74 @@
+// ============================================================================
+// curator/types/vocab.hsl — 边守卫词汇层（拓扑 16 条边的全部 Guard 枚举）
+// ============================================================================
+// 设计纪律（Gauntlet 唯一守卫纪律 unique-guard discipline，同 Vigil）：
+//   每条边的 Guard 变体名在整个 graph 内唯一 —— 事件总线按「变体名」匹配
+//   match 臂与 edge 声明（interp.traceEdgeFire），重名守卫会产生边发射别名，
+//   使 edge 覆盖率不可判定。本文件所有挂边变体名全局唯一，一一对应 16 条边。
+//
+// 与 Vigil 的拓扑对比（泛化实验的自变量）：
+//   Vigil：fan-out router 三路处置 + critic 审查回环（9n/17e/5 环）
+//   Curator：fan-in quarantine 五路汇聚 + 双修复回环（8n/16e/4 环）
+// ============================================================================
+
+/// 模式闸词汇（schema_gate 输出）—— 2 条边：
+///   schema_gate -> extractor  on SchemaPassed
+///   schema_gate -> quarantine on SchemaFailed
+#[derive(Debug, Clone)]
+export enum SchemaEvent {
+    SchemaPassed { doc: Doc },
+    SchemaFailed { doc: Doc, reason: String },
+}
+
+/// 实体抽取词汇（extractor 输出）—— 3 条边：
+///   extractor -> validator  on EntitiesExtracted
+///   extractor -> extractor  on Malformed（协议漂移自环）
+///   extractor -> quarantine on ExtractAbandoned（漂移硬上限）
+#[derive(Debug, Clone)]
+export enum ExtractEvent {
+    EntitiesExtracted { entities: Vec<Entity> },
+    Malformed { note: String },
+    ExtractAbandoned { reason: String },
+}
+
+/// 实体校验词汇（validator 输出）—— 3 条边：
+///   validator -> enricher    on EntitiesValid
+///   validator -> extractor   on EntitiesInvalid（修复回环：重抽取）
+///   validator -> quarantine  on ValidationExhausted（校验预算耗尽）
+#[derive(Debug, Clone)]
+export enum ValidateEvent {
+    EntitiesValid { entities: Vec<Entity> },
+    EntitiesInvalid { reason: String },
+    ValidationExhausted { reason: String },
+}
+
+/// 富集词汇（enricher 输出）—— 3 条边：
+///   enricher -> publisher  on EnrichmentComplete
+///   enricher -> enricher   on EnrichmentPartial（部分完成自环）
+///   enricher -> quarantine on EnrichmentFailed
+#[derive(Debug, Clone)]
+export enum EnrichEvent {
+    EnrichmentComplete { summary: String, topics: Vec<String> },
+    EnrichmentPartial { note: String },
+    EnrichmentFailed { reason: String },
+}
+
+/// 发布闸词汇（publisher 输出）—— 2 条边：
+///   publisher -> intake   on Published（批次推进 = 终态提交）
+///   publisher -> enricher on PublicationRejected（发布返工回环）
+#[derive(Debug, Clone)]
+export enum PublishEvent {
+    Published { summary: String },
+    PublicationRejected { reason: String },
+}
+
+/// 预算信号词汇（budget 状态）—— 2 条边：
+///   budget -> quarantine on TurnExhausted（轮预算耗尽 → 递延收束）
+///   budget -> extractor  on DriftAlarm（漂移预算告警 → 协议提醒注入）
+/// Within 不挂边（无转移语义）。
+#[derive(Debug, Clone)]
+export enum BudgetSignal {
+    TurnExhausted,
+    DriftAlarm,
+    Within,
+}

@@ -1,0 +1,26 @@
+// ============================================================================
+// curator/agents/quarantine.hsl — 隔离台账（fan-in 汇聚节点的领域操作）
+// ============================================================================
+// Curator 拓扑的五路失败汇聚点（schema/extract/enrich/publish/budget）。
+// Vigil 用 fan-out router 分流三路处置；Curator 反向用 fan-in quarantine
+// 汇聚五路失败 —— 泛化实验的拓扑对比自变量之一。
+// 文法覆盖：impl 返回 String / format! 前缀组装
+// ============================================================================
+
+import { CaseRecord } from "../types/docs.hsl";
+
+#[derive(Debug, Clone)]
+export struct QuarantineLedger {
+    run_id: String,
+}
+
+impl QuarantineLedger {
+    fn new(run_id: String) -> QuarantineLedger {
+        QuarantineLedger { run_id }
+    }
+
+    /// 收纳一例隔离：返回隔离回执（案例 detail 前缀）。
+    fn hold(self, case: CaseRecord) -> String {
+        format!("[{}] quarantined: {}", self.run_id, case.doc_id)
+    }
+}

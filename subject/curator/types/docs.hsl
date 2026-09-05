@@ -1,0 +1,79 @@
+// ============================================================================
+// curator/types/docs.hsl — 数据面：文档 / 实体 / 案例记录 / 消息 / 批次事件
+// ============================================================================
+// 文法覆盖：struct 派生 / f64 字段（S-15 域算术的实体用场）/ Vec 泛型字段 /
+//           enum 结构变体 + 单元变体
+// ============================================================================
+
+/// 待策展文档（batch 轨道逐条加载）。
+#[derive(Debug, Clone)]
+export struct Doc {
+    id: String,
+    source: String,
+    title: String,
+    body: String,
+}
+
+/// 抽取实体（extractor 模型输出经 parse_extract 结构化）。
+/// confidence 为 f64 —— 静态域算术（S-15）与校验阈值的真实交汇点。
+#[derive(Debug, Clone)]
+export struct Entity {
+    kind: String,
+    value: String,
+    confidence: f64,
+}
+
+/// 处置案例记录（产物 cases.jsonl 的数据面）。
+#[derive(Debug, Clone)]
+export struct CaseRecord {
+    doc_id: String,
+    title: String,
+    disposition: String,   // published / quarantined / deferred
+    detail: String,
+}
+
+/// 会话消息（transcript 产物 + 模型端口输入）。
+#[derive(Debug, Clone)]
+export struct Message {
+    role: String,
+    content: String,
+}
+
+impl Message {
+    fn system(content: String) -> Message {
+        Message { role: String::from("system"), content }
+    }
+    fn user(content: String) -> Message {
+        Message { role: String::from("user"), content }
+    }
+    fn assistant(content: String) -> Message {
+        Message { role: String::from("assistant"), content }
+    }
+    fn tool(content: String) -> Message {
+        Message { role: String::from("tool"), content }
+    }
+}
+
+impl Doc {
+    /// 渲染为抽取 prompt 的用户面（N1 纪律：组装在 HSL 侧）。
+    fn render(self) -> String {
+        let mut out = String::from("doc ");
+        out.push_str(self.id.as_str());
+        out.push_str(" | ");
+        out.push_str(self.source.as_str());
+        out.push_str(" | ");
+        out.push_str(self.title.as_str());
+        out.push_str("\n");
+        out.push_str(self.body.as_str());
+        out
+    }
+}
+
+/// 批次事件（intake 节点输出）—— 1 条边：
+///   intake -> schema_gate on DocumentReceived
+/// BatchEmpty 不挂边（无转移语义）。
+#[derive(Debug, Clone)]
+export enum DocEvent {
+    DocumentReceived { doc: Doc },
+    BatchEmpty,
+}

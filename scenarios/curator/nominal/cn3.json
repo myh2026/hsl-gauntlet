@@ -1,0 +1,14 @@
+{
+  "tracks": {
+    "batch": [
+      "{\"id\": \"DOC-001\", \"source\": \"wiki\", \"title\": \"observability platform migration\", \"body\": \"The platform team migrated the observability stack to a new architecture. Ada Lovelace led the migration for Acme Corp completed on 2026-08-14 with error rate held at 0.42%.\"}"
+    ],
+    "extract": [
+      "{\"entities\": [{\"kind\": \"person\", \"value\": \"Ada Lovelace\", \"confidence\": 0.92}]}",
+      "{\"entities\": [{\"kind\": \"person\", \"value\": \"Ada Lovelace\", \"confidence\": 0.92}, {\"kind\": \"org\", \"value\": \"Acme Corp\", \"confidence\": 0.88}]}"
+    ],
+    "enrich": [
+      "{\"summary\": \"Ada Lovelace led Acme Corp observability migration on 2026-08-14 with error rate held at 0.42%.\", \"topics\": [\"observability\", \"migration\"]}"
+    ]
+  }
+}

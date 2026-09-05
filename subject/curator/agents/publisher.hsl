@@ -1,0 +1,41 @@
+// ============================================================================
+// curator/agents/publisher.hsl — 发布闸：富集产物完备性检查（确定性终态节点）
+// ============================================================================
+// 发布三闸：summary 达到实质长度 ∧ topics ≥ 2 ∧ 实体数 ≥ 2。
+// 文法覆盖：impl 方法返回 enum / u32 比较 / format! 三元数据
+// ============================================================================
+
+import { Entity } from "../types/docs.hsl";
+import { PublishEvent } from "../types/vocab.hsl";
+
+#[derive(Debug, Clone)]
+export struct Publisher {
+    ledger_name: String,
+    min_summary: u32,
+    min_topics: u32,
+    min_entities: u32,
+}
+
+impl Publisher {
+    fn new(ledger_name: String) -> Publisher {
+        Publisher { ledger_name, min_summary: 40, min_topics: 2, min_entities: 2 }
+    }
+
+    /// 发布评估：完备 → Published（附 ledger 前缀的终态摘要）；否则 Rejected（携带返工说明）。
+    fn assess(self, summary: String, topics: Vec<String>, entities: Vec<Entity>) -> PublishEvent {
+        let mut reason = String::from("");
+        if summary.len() < self.min_summary {
+            reason = format!("summary too short: {} < {} chars", summary.len(), self.min_summary);
+        } else if topics.len() < self.min_topics {
+            reason = format!("at least {} topics required, got {}", self.min_topics, topics.len());
+        } else if entities.len() < self.min_entities {
+            reason = format!("at least {} entities required, got {}", self.min_entities, entities.len());
+        }
+        if reason.len() == 0 {
+            let final_summary = format!("[{}] {}", self.ledger_name, summary);
+            PublishEvent::Published { summary: final_summary }
+        } else {
+            PublishEvent::PublicationRejected { reason }
+        }
+    }
+}

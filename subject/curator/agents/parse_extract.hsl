@@ -1,0 +1,102 @@
+// ============================================================================
+// curator/agents/parse_extract.hsl — 抽取协议解析（严格 JSON 协议 + 软硬漂移）
+// ============================================================================
+// 硬漂移（非法 JSON）→ Err；软漂移（合法 JSON 但缺 entities 数组）→ Malformed。
+// 二者都由 graph 侧归类进 Malformed 漂移通道（extractor 自环边）。
+//
+// 值模型纪律（语言实测 #L-22 素材）：native 块返回的 plain object 不带
+// __struct 标记，属于 foreign 值 —— 字段读取可用，但 .clone()/方法直通失效
+// （运行期 panic）。故本解析器 native 只做「JSON → 拍平字符串」的 I/O 搬运，
+// Entity 结构体在 HSL 侧经 split_once 逐字段重建 —— N1 纪律（逻辑不进
+// native）的值模型版本。
+//
+// 拍平协议：entities 数组 → "kind~value~conf|kind~value~conf"；
+//          错误通道与数据通道分离（哨兵对）。
+// 协议保留字：entity value 不得含 "~" 与 "|"。
+// 文法覆盖：split_once 循环重建 / turbofish parse::<f64>() / 嵌套 Option match
+// ============================================================================
+
+import { Entity } from "../types/docs.hsl";
+import { ExtractEvent } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+import { split_once } from "std/text";
+
+/// 模型输出 → ExtractEvent。
+/// 协议：恰好一个 JSON 对象，形如 {"entities": [{"kind": .., "value": .., "confidence": ..}]}。
+export fn parse_extract(raw: String) -> Result<ExtractEvent, HarnessError> {
+    let parts: Vec<String> = native typescript {
+        let parsed;
+        try {
+            parsed = $host.json.parse(raw);
+        } catch (e) {
+            return ["__parse_error", String(e && e.message || e)];
+        }
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed) || !Array.isArray(parsed.entities)) {
+            return ["__malformed", "entities array missing"];
+        }
+        const flat = parsed.entities
+            .map((e) => `${String(e.kind ?? "")}~${String(e.value ?? "")}~${String(e.confidence ?? "")}`)
+            .join("|");
+        return [flat, ""];
+    };
+    let flat = parts[0].clone();
+    let err = parts[1].clone();
+    if flat == String::from("__parse_error") {
+        return Err(HarnessError::new(String::from("protocol"), format!("抽取输出不是合法 JSON：{}", err)));
+    }
+    if flat == String::from("__malformed") {
+        return Ok(ExtractEvent::Malformed { note: String::from("抽取输出缺少 entities 数组（软漂移）") });
+    }
+    // 拍平行 → Vec<Entity>（HSL 侧重建结构体）
+    let mut entities: Vec<Entity> = Vec::new();
+    let mut rest = flat.clone();
+    let mut guard: u32 = 0;
+    while rest.len() > 0 && guard < 64 {
+        let piece = split_once(rest.clone(), String::from("|"));
+        match piece {
+            Some(pair) => {
+                let head = pair[0].clone();
+                rest = pair[1].clone();
+                if head.len() > 0 {
+                    let rebuilt = rebuild_entity(head)?;
+                    entities.push(rebuilt);
+                }
+            },
+            None => {
+                if rest.len() > 0 {
+                    let rebuilt = rebuild_entity(rest.clone())?;
+                    entities.push(rebuilt);
+                }
+                rest = String::from("");
+            },
+        }
+        guard += 1;
+    }
+    Ok(ExtractEvent::EntitiesExtracted { entities })
+}
+
+/// 单条拍平记录 "kind~value~conf" → Entity。
+fn rebuild_entity(piece: String) -> Result<Entity, HarnessError> {
+    let kv = split_once(piece.clone(), String::from("~"));
+    match kv {
+        Some(p1) => {
+            let kind = p1[0].clone();
+            let tail = p1[1].clone();
+            let vc = split_once(tail.clone(), String::from("~"));
+            match vc {
+                Some(p2) => {
+                    let value = p2[0].clone();
+                    let conf_raw = p2[1].clone();
+                    let confidence = conf_raw.parse::<f64>()?;
+                    Ok(Entity { kind, value, confidence })
+                },
+                None => {
+                    Err(HarnessError::new(String::from("protocol"), format!("实体记录缺少置信度字段：{}", tail)))
+                },
+            }
+        },
+        None => {
+            Err(HarnessError::new(String::from("protocol"), format!("实体记录缺少字段：{}", piece)))
+        },
+    }
+}

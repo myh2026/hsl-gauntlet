@@ -1,0 +1,99 @@
+// ============================================================================
+// curator/agents/validator.hsl — 实体校验器（确定性节点 + 语料工具耦合）
+// ============================================================================
+// 校验三闸：数量 ≥ 2 ∧ 置信度全部 ≥ 0.5 ∧ kind ∈ 语料已知类别集。
+// 语料不可得（F3 缺失 / F4 损坏 / F5 拒绝）→ ValidationExhausted（校验放弃，
+// 不同于 EntitiesInvalid 的可修复回环 —— 工具失败不是数据问题，重试无意义）。
+// 文法覆盖：Option match / split_once 循环 / 嵌套 match / f64 比较 / 标志位循环
+// ============================================================================
+
+import { Doc, Entity } from "../types/docs.hsl";
+import { ValidateEvent } from "../types/vocab.hsl";
+import { load_corpus } from "../tools/corpus.hsl";
+import { split_once } from "std/text";
+
+#[derive(Debug, Clone)]
+export struct EntityValidator {
+    gate: String,
+    min_entities: u32,
+    min_confidence: f64,
+}
+
+impl EntityValidator {
+    fn new(gate: String) -> EntityValidator {
+        EntityValidator { gate, min_entities: 2, min_confidence: 0.5 }
+    }
+
+    /// 校验一批实体：通过 → EntitiesValid；不达标（可修复）→ EntitiesInvalid；
+    /// 语料不可得（不可修复）→ ValidationExhausted。
+    fn validate(self, doc: Doc, entities: Vec<Entity>) -> ValidateEvent {
+        // ---- 语料加载（故障注入面：fs.read）----
+        let corpus = load_corpus();
+        let known_raw = match corpus {
+            Ok(out) => {
+                if out.ok {
+                    out.body
+                } else {
+                    let reason = format!("corpus unavailable: {}", out.error);
+                    return ValidateEvent::ValidationExhausted { reason };
+                }
+            },
+            Err(e) => {
+                let reason = format!("corpus tool error: {}", e.message);
+                return ValidateEvent::ValidationExhausted { reason };
+            },
+        };
+
+        // ---- 数量闸 ----
+        if entities.len() < self.min_entities {
+            let reason = format!("at least {} entities required, got {}", self.min_entities, entities.len());
+            return ValidateEvent::EntitiesInvalid { reason };
+        }
+
+        // ---- 置信度闸（f64 域比较）----
+        for e in entities.clone() {
+            if e.confidence < self.min_confidence {
+                let reason = format!("entity {} confidence {} below {}", e.value, e.confidence, self.min_confidence);
+                return ValidateEvent::EntitiesInvalid { reason };
+            }
+        }
+
+        // ---- 类别闸（kind ∈ 语料已知类别集，口径 {}）----
+        let mut known: Vec<String> = Vec::new();
+        let mut rest = known_raw.clone();
+        let mut guard: u32 = 0;
+        while rest.len() > 0 && guard < 64 {
+            let piece = split_once(rest.clone(), String::from("|"));
+            match piece {
+                Some(pair) => {
+                    let head = pair[0].clone();
+                    rest = pair[1].clone();
+                    if head.len() > 0 {
+                        known.push(head);
+                    }
+                },
+                None => {
+                    if rest.len() > 0 {
+                        known.push(rest.clone());
+                    }
+                    rest = String::from("");
+                },
+            }
+            guard += 1;
+        }
+        for e in entities.clone() {
+            let mut hit: bool = false;
+            for k in known.clone() {
+                if e.kind == k {
+                    hit = true;
+                }
+            }
+            if !hit {
+                let reason = format!("entity kind \"{}\" not in corpus known kinds", e.kind);
+                return ValidateEvent::EntitiesInvalid { reason };
+            }
+        }
+
+        ValidateEvent::EntitiesValid { entities }
+    }
+}

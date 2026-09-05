@@ -1,0 +1,68 @@
+// ============================================================================
+// curator/agents/parse_enrich.hsl — 富集协议解析（严格 JSON 协议 + 部分完成分类）
+// ============================================================================
+// 硬漂移（非法 JSON）→ Err（graph 侧归类 EnrichmentFailed → quarantine）；
+// 部分完成（缺 topics 或 summary 为空）→ Partial（自环重试）；
+// 完整（summary 非空 ∧ topics 数组非空）→ Complete。
+// 文法覆盖：native 返回 Vec<String> / split_once 重建 / if-else if 链 / Option match
+// ============================================================================
+
+import { EnrichEvent } from "../types/vocab.hsl";
+import { HarnessError } from "../types/errors.hsl";
+import { split_once } from "std/text";
+
+/// 模型输出 → EnrichEvent。
+/// 协议：恰好一个 JSON 对象，形如 {"summary": "..", "topics": ["..", ".."]}。
+/// native 拍平策略：summary 直接传；topics 拍平为 "a|b|c"；解析失败以
+/// ["__parse_error", <msg>] 哨兵对上报（错误通道与数据通道分离）。
+export fn parse_enrich(raw: String) -> Result<EnrichEvent, HarnessError> {
+    let parts: Vec<String> = native typescript {
+        let parsed;
+        try {
+            parsed = $host.json.parse(raw);
+        } catch (e) {
+            return ["__parse_error", String(e && e.message || e)];
+        }
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return ["__parse_error", "enrich output is not a JSON object"];
+        }
+        const summary = String(parsed.summary ?? "");
+        const topics = Array.isArray(parsed.topics) ? parsed.topics.map((t) => String(t)) : [];
+        return [summary, topics.join("|")];
+    };
+    let summary = parts[0].clone();
+    let topics_raw = parts[1].clone();
+    if summary == String::from("__parse_error") {
+        return Err(HarnessError::new(String::from("protocol"), format!("富集输出不是合法 JSON：{}", topics_raw)));
+    }
+    if summary.len() == 0 {
+        return Ok(EnrichEvent::EnrichmentPartial { note: String::from("summary 缺失（部分完成）") });
+    }
+    if topics_raw.len() == 0 {
+        return Ok(EnrichEvent::EnrichmentPartial { note: String::from("topics 缺失（部分完成）") });
+    }
+    // topics 重建：管道分隔 → Vec<String>
+    let mut topics: Vec<String> = Vec::new();
+    let mut rest = topics_raw.clone();
+    let mut guard: u32 = 0;
+    while rest.len() > 0 && guard < 64 {
+        let piece = split_once(rest.clone(), String::from("|"));
+        match piece {
+            Some(pair) => {
+                let head = pair[0].clone();
+                rest = pair[1].clone();
+                if head.len() > 0 {
+                    topics.push(head);
+                }
+            },
+            None => {
+                if rest.len() > 0 {
+                    topics.push(rest.clone());
+                }
+                rest = String::from("");
+            },
+        }
+        guard += 1;
+    }
+    Ok(EnrichEvent::EnrichmentComplete { summary, topics })
+}

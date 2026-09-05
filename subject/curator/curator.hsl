@@ -1,0 +1,436 @@
+// ============================================================================
+// curator/curator.hsl — 入口：Curator 主编排 graph + main + 投射声明
+// ============================================================================
+// SUT #2 —— 文档策展管线 harness（数据摄取 → 模式闸 → 实体抽取 → 校验 →
+// 富集 → 发布闸，五路失败 fan-in 汇聚 quarantine）。
+//
+// 拓扑（8 节点 / 16 边 / 4 守卫环）—— 与 Vigil 的泛化对比自变量：
+//
+//   [intake] ──DocumentReceived──► [schema_gate]                  [budget] ──TurnExhausted──► [quarantine]
+//   [schema_gate] ─SchemaPassed──► [extractor]                     [budget] ──DriftAlarm───► [extractor]
+//   [schema_gate] ─SchemaFailed──► [quarantine]                    [extractor] ─EntitiesExtracted─► [validator]
+//   [extractor] ─Malformed─► [extractor]（自环）                   [extractor] ─ExtractAbandoned──► [quarantine]
+//   [validator] ─EntitiesValid──► [enricher]                       [validator] ─EntitiesInvalid──► [extractor]（修复回环）
+//   [validator] ─ValidationExhausted──► [quarantine]               [enricher] ─EnrichmentComplete──► [publisher]
+//   [enricher] ─EnrichmentPartial─► [enricher]（自环）             [enricher] ─EnrichmentFailed──► [quarantine]
+//   [publisher] ─Published──► [intake]（批次推进）                 [publisher] ─PublicationRejected──► [enricher]（返工回环）
+//
+// Vigil：fan-out router 三路处置 + critic 审查回环（9n/17e/5 环）
+// Curator：fan-in quarantine 五路汇聚 + 双修复回环（8n/16e/4 环）
+//
+// 唯一守卫纪律：16 条边的 Guard 变体名全局唯一（见 types/vocab.hsl）。
+// 文法覆盖：graph mut 参数 / node mut / 条件边环 / AgentLoop 穷尽 match /
+//           macro_rules! bump / GraphName::run / project + scale
+// ============================================================================
+
+import { Doc, Entity, Message, CaseRecord, DocEvent } from "./types/docs.hsl";
+import { SchemaEvent, ExtractEvent, ValidateEvent, EnrichEvent, PublishEvent, BudgetSignal } from "./types/vocab.hsl";
+import { Policy, Budget, SessionState, SessionStats, RunReport } from "./types/state.hsl";
+import { HarnessError } from "./types/errors.hsl";
+import { ModelPort, make_port } from "./providers/model.hsl";
+import { DocumentLog, load_batch } from "./agents/intake.hsl";
+import { SchemaGate } from "./agents/schema_gate.hsl";
+import { parse_extract } from "./agents/parse_extract.hsl";
+import { EntityValidator } from "./agents/validator.hsl";
+import { parse_enrich } from "./agents/parse_enrich.hsl";
+import { Publisher } from "./agents/publisher.hsl";
+import { QuarantineLedger } from "./agents/quarantine.hsl";
+import { EXTRACT_PROMPT, ENRICH_PROMPT, HARNESS_CONFIG, EVENTS_SCHEMA } from "./config/resources.hsl";
+
+macro_rules! bump {
+    ($field:expr, $by:expr) => { $field += $by; };
+}
+
+// ============================================================================
+// 消息装配（prompt 组装全部在 HSL 侧 —— N1 纪律）
+// ============================================================================
+
+fn extract_messages(doc: Doc) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(EXTRACT_PROMPT));
+    msgs.push(Message::user(doc.render()));
+    msgs
+}
+
+fn enrich_messages(doc: Doc, entities: Vec<Entity>, reject_note: String) -> Vec<Message> {
+    let mut msgs: Vec<Message> = Vec::new();
+    msgs.push(Message::system(ENRICH_PROMPT));
+    let mut body = String::from("doc: ");
+    body.push_str(doc.render().as_str());
+    body.push_str("\nentities:\n");
+    for e in entities {
+        body.push_str(format!("- {} | {} | {}\n", e.kind, e.value, e.confidence).as_str());
+    }
+    if reject_note.len() > 0 {
+        body.push_str("\npublisher note (fix this): ");
+        body.push_str(reject_note.as_str());
+    }
+    msgs.push(Message::user(body));
+    msgs
+}
+
+// ============================================================================
+// 主编排 graph：文档策展会话状态机
+// ============================================================================
+
+graph Curator(mut state: SessionState) -> Result<RunReport, HarnessError> {
+    // ---- 8 节点（顶点 = 可执行单元；budget 为本地可变顶点）----
+    node intake: DocumentLog = DocumentLog::new(state.batch.clone())?;
+    node schema_gate: SchemaGate = SchemaGate::new();
+    node extractor: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("extract"))?;
+    node validator: EntityValidator = EntityValidator::new(String::from("type-consistency"));
+    node enricher: Box<dyn ModelPort> = make_port(state.policy.clone(), String::from("enrich"))?;
+    node publisher: Publisher = Publisher::new(String::from("catalog"));
+    node quarantine: QuarantineLedger = QuarantineLedger::new(String::from("curator-run"));
+    node mut budget: Budget = Budget::zero();
+
+    // ---- 16 条边（Guard 变体全局唯一 —— Gauntlet 唯一守卫纪律）----
+    edge intake -> schema_gate on DocEvent::DocumentReceived;
+    edge schema_gate -> extractor on SchemaEvent::SchemaPassed;
+    edge schema_gate -> quarantine on SchemaEvent::SchemaFailed;
+    edge extractor -> extractor on ExtractEvent::Malformed;
+    edge extractor -> validator on ExtractEvent::EntitiesExtracted;
+    edge extractor -> quarantine on ExtractEvent::ExtractAbandoned;
+    edge validator -> enricher on ValidateEvent::EntitiesValid;
+    edge validator -> extractor on ValidateEvent::EntitiesInvalid;
+    edge validator -> quarantine on ValidateEvent::ValidationExhausted;
+    edge enricher -> publisher on EnrichEvent::EnrichmentComplete;
+    edge enricher -> enricher on EnrichEvent::EnrichmentPartial;
+    edge enricher -> quarantine on EnrichEvent::EnrichmentFailed;
+    edge publisher -> intake on PublishEvent::Published;
+    edge publisher -> enricher on PublishEvent::PublicationRejected;
+    edge budget -> quarantine on BudgetSignal::TurnExhausted;
+    edge budget -> extractor on BudgetSignal::DriftAlarm;
+
+    let mut cases: Vec<CaseRecord> = Vec::new();
+    let mut session_verdict: String = String::from("batch-drained");
+
+    // ---- AgentLoop：外层 = 批次文档拉取回环 ----
+    loop {
+        // 预算闸门（budget -> quarantine on TurnExhausted / budget -> extractor on DriftAlarm）
+        match budget.clone().status(state.policy.clone()) {
+            BudgetSignal::TurnExhausted => {
+                let remaining = state.batch.len() - state.doc_idx;
+                let deferred_case = CaseRecord {
+                    doc_id: String::from("(batch)"),
+                    title: String::from("remaining batch deferred"),
+                    disposition: String::from("deferred"),
+                    detail: format!("turn budget exhausted with {} doc(s) deferred", remaining),
+                };
+                cases.push(deferred_case);
+                bump!(state.stats.deferred, 1);
+                session_verdict = String::from("budget-exhausted");
+                break;
+            },
+            BudgetSignal::DriftAlarm => {
+                if state.drift_noted == false {
+                    state.transcript.push(Message::system(String::from("[budget] 抽取协议漂移预算告警：请严格按 JSON 协议输出")));
+                    state.drift_noted = true;
+                }
+            },
+            BudgetSignal::Within => {},
+        }
+
+        // 批次拉取（intake -> schema_gate on DocumentReceived）
+        match intake.clone().poll(state.doc_idx) {
+            DocEvent::DocumentReceived { doc } => {
+                bump!(state.stats.docs_seen, 1);
+                bump!(budget.turns_used, 1);
+                state.transcript.push(Message::user(doc.clone().render()));
+
+                // ---- 模式闸（schema_gate -> extractor / quarantine）----
+                match schema_gate.clone().check(doc.clone()) {
+                    SchemaEvent::SchemaPassed { doc: d } => {
+                        // ---- 抽取-校验回环（Malformed 自环 + EntitiesInvalid 修复回环）----
+                        let mut entities: Vec<Entity> = Vec::new();
+                        let mut valid: bool = false;
+                        let mut attempts: u32 = 0;
+                        let mut extract_dead: String = String::from("");
+                        let mut validate_dead: String = String::from("");
+                        while !valid && extract_dead.len() == 0 && validate_dead.len() == 0 && attempts <= state.policy.max_validate {
+                            let extract_raw = extractor.clone().act(extract_messages(d.clone())).await?;
+                            state.transcript.push(Message::assistant(extract_raw.clone()));
+                            let ev = match parse_extract(extract_raw) {
+                                Ok(e) => e,
+                                Err(e) => ExtractEvent::Malformed { note: e.message },
+                            };
+                            match ev {
+                                ExtractEvent::EntitiesExtracted { entities: ents } => {
+                                    let v = validator.clone().validate(d.clone(), ents.clone());
+                                    match v {
+                                        ValidateEvent::EntitiesValid { entities: ok_ents } => {
+                                            entities = ok_ents;
+                                            valid = true;
+                                        },
+                                        ValidateEvent::EntitiesInvalid { reason } => {
+                                            bump!(state.stats.validations_failed, 1);
+                                            attempts += 1;
+                                            state.transcript.push(Message::tool(format!("[validator] 修复回环：{}", reason)));
+                                        },
+                                        ValidateEvent::ValidationExhausted { reason } => {
+                                            validate_dead = reason;
+                                        },
+                                    }
+                                },
+                                ExtractEvent::Malformed { note } => {
+                                    // 协议漂移自环（extractor -> extractor on Malformed）
+                                    bump!(budget.drift_count, 1);
+                                    bump!(state.stats.drift_retries, 1);
+                                    // 双阈值：drift_count >= max_drift → DriftAlarm（预算节点提醒）；
+                                    //          drift_count >= 2*max_drift → 放弃本文档（硬上限）
+                                    if budget.drift_count >= state.policy.max_drift * 2 {
+                                        extract_dead = format!("extract protocol drift exhausted: {}", note);
+                                    } else {
+                                        state.transcript.push(Message::user(String::from("你的上一条输出违反了协议。请重新输出恰好一个 JSON 对象（entities 数组按系统提示词的格式）。")));
+                                    }
+                                },
+                                ExtractEvent::ExtractAbandoned { reason: _reason } => {
+                                    // 本分支在抽取 match 中结构性不可达（Abandoned 由硬上限路径构造）
+                                },
+                            }
+                        }
+
+                        if extract_dead.len() > 0 {
+                            // 漂移硬上限 → 放弃本文档（extractor -> quarantine on ExtractAbandoned）
+                            let abandoned = ExtractEvent::ExtractAbandoned { reason: extract_dead };
+                            match abandoned {
+                                ExtractEvent::EntitiesExtracted { entities: _e } => {},
+                                ExtractEvent::Malformed { note: _n } => {},
+                                ExtractEvent::ExtractAbandoned { reason } => {
+                                    let case = CaseRecord {
+                                        doc_id: d.id.clone(),
+                                        title: d.title.clone(),
+                                        disposition: String::from("quarantined"),
+                                        detail: quarantine.clone().hold(CaseRecord {
+                                            doc_id: d.id.clone(),
+                                            title: d.title.clone(),
+                                            disposition: String::from("quarantined"),
+                                            detail: reason,
+                                        }),
+                                    };
+                                    cases.push(case);
+                                    bump!(state.stats.quarantined, 1);
+                                },
+                            }
+                        } else if validate_dead.len() > 0 {
+                            // 校验不可修复（语料不可得）→ 隔离（ValidationExhausted 边已在臂内发射）
+                            let case = CaseRecord {
+                                doc_id: d.id.clone(),
+                                title: d.title.clone(),
+                                disposition: String::from("quarantined"),
+                                detail: format!("validation exhausted: {}", validate_dead),
+                            };
+                            cases.push(case);
+                            bump!(state.stats.quarantined, 1);
+                        } else if !valid {
+                            // 修复预算耗尽 → 校验放弃（validator -> quarantine on ValidationExhausted）
+                            let exhausted = ValidateEvent::ValidationExhausted {
+                                reason: format!("validation repair budget exhausted after {} attempts", attempts),
+                            };
+                            match exhausted {
+                                ValidateEvent::EntitiesValid { entities: _e } => {},
+                                ValidateEvent::EntitiesInvalid { reason: _r } => {},
+                                ValidateEvent::ValidationExhausted { reason } => {
+                                    let case = CaseRecord {
+                                        doc_id: d.id.clone(),
+                                        title: d.title.clone(),
+                                        disposition: String::from("quarantined"),
+                                        detail: format!("validation repair exhausted: {}", reason),
+                                    };
+                                    cases.push(case);
+                                    bump!(state.stats.quarantined, 1);
+                                },
+                            }
+                        } else {
+                            // ---- 富集-发布回环（Partial 自环 + PublicationRejected 返工回环）----
+                            let mut published: bool = false;
+                            let mut final_summary: String = String::from("");
+                            let mut reject_note: String = String::from("");
+                            let mut partial_attempts: u32 = 0;
+                            let mut enrich_dead: String = String::from("");
+                            let mut rounds: u32 = 0;
+                            while !published && enrich_dead.len() == 0 && rounds <= state.policy.max_pub_rounds && partial_attempts <= state.policy.max_partial {
+                                let enrich_raw = enricher.clone().act(enrich_messages(d.clone(), entities.clone(), reject_note.clone())).await?;
+                                state.transcript.push(Message::assistant(enrich_raw.clone()));
+                                let ev = match parse_enrich(enrich_raw) {
+                                    Ok(e) => e,
+                                    Err(e) => EnrichEvent::EnrichmentFailed { reason: e.message },
+                                };
+                                match ev {
+                                    EnrichEvent::EnrichmentComplete { summary, topics } => {
+                                        let pub_ev = publisher.clone().assess(summary.clone(), topics.clone(), entities.clone());
+                                        match pub_ev {
+                                            PublishEvent::Published { summary: receipt } => {
+                                                published = true;
+                                                final_summary = receipt;
+                                            },
+                                            PublishEvent::PublicationRejected { reason } => {
+                                                bump!(state.stats.rejections, 1);
+                                                reject_note = reason;
+                                                state.transcript.push(Message::tool(format!("[publisher] 返工：{}", reason)));
+                                                rounds += 1;
+                                            },
+                                        }
+                                    },
+                                    EnrichEvent::EnrichmentPartial { note } => {
+                                        // 部分完成自环（enricher -> enricher on EnrichmentPartial）
+                                        bump!(state.stats.partial_retries, 1);
+                                        partial_attempts += 1;
+                                        state.transcript.push(Message::tool(format!("[enricher] 部分完成：{}", note)));
+                                    },
+                                    EnrichEvent::EnrichmentFailed { reason } => {
+                                        enrich_dead = reason;
+                                    },
+                                }
+                            }
+
+                            if published {
+                                // 发布（publisher -> intake on Published —— 批次推进 = 终态提交）
+                                let record = CaseRecord {
+                                    doc_id: d.id.clone(),
+                                    title: d.title.clone(),
+                                    disposition: String::from("published"),
+                                    detail: final_summary,
+                                };
+                                cases.push(record);
+                                bump!(state.stats.published, 1);
+                            } else if enrich_dead.len() > 0 {
+                                // 富集硬失败 → 隔离（enricher -> quarantine on EnrichmentFailed）
+                                let case = CaseRecord {
+                                    doc_id: d.id.clone(),
+                                    title: d.title.clone(),
+                                    disposition: String::from("quarantined"),
+                                    detail: format!("enrichment failed: {}", enrich_dead),
+                                };
+                                cases.push(case);
+                                bump!(state.stats.quarantined, 1);
+                            } else {
+                                // 发布返工预算耗尽 → 隔离
+                                let case = CaseRecord {
+                                    doc_id: d.id.clone(),
+                                    title: d.title.clone(),
+                                    disposition: String::from("quarantined"),
+                                    detail: format!("enrichment could not pass publication in {} rounds: {}", state.policy.max_pub_rounds, reject_note),
+                                };
+                                cases.push(case);
+                                bump!(state.stats.quarantined, 1);
+                            }
+                        }
+                    },
+                    SchemaEvent::SchemaFailed { doc: d, reason } => {
+                        // 结构失败 → 隔离（schema_gate -> quarantine on SchemaFailed）
+                        let case = CaseRecord {
+                            doc_id: d.id.clone(),
+                            title: d.title.clone(),
+                            disposition: String::from("quarantined"),
+                            detail: format!("schema gate: {}", reason),
+                        };
+                        cases.push(case);
+                        bump!(state.stats.quarantined, 1);
+                    },
+                }
+                bump!(state.doc_idx, 1);
+            },
+            DocEvent::BatchEmpty => {
+                break;
+            },
+        }
+    }
+
+    let ok = session_verdict == String::from("batch-drained");
+    Ok(RunReport {
+        task: state.policy.task.clone(),
+        verdict: session_verdict,
+        cases: cases.clone(),
+        stats: state.stats.clone(),
+        transcript: state.transcript.clone(),
+        ok,
+    })
+}
+
+// ============================================================================
+// 入口与产物
+// ============================================================================
+
+export fn main() -> Result<(), HarnessError> {
+    let policy = Policy::from_config()?;
+    let mut opening: Vec<Message> = Vec::new();
+    opening.push(Message::system(String::from("Curator session opening")));
+    opening.push(Message::user(format!("workspace: {}\ndirective: {}", policy.workspace, policy.task)));
+    let state = SessionState {
+        policy: policy.clone(),
+        transcript: opening,
+        stats: SessionStats::zero(),
+        batch: load_batch(),
+        doc_idx: 0,
+        drift_noted: false,
+    };
+    let report = Curator::run(state)?;
+    write_artifacts(report, policy)
+}
+
+fn write_artifacts(report: RunReport, policy: Policy) -> Result<(), HarnessError> {
+    let report_md = render_report(report.clone(), policy);
+    let transcript_jsonl: String = native typescript {
+        const lines = report.transcript.map((m) => JSON.stringify({ role: m.role, content: m.content }));
+        return lines.join("\n") + "\n";
+    };
+    let cases_jsonl: String = native typescript {
+        const lines = report.cases.map((c) => JSON.stringify({ doc_id: c.doc_id, title: c.title, disposition: c.disposition, detail: c.detail }));
+        return lines.join("\n") + "\n";
+    };
+    native typescript {
+        $host.artifacts.write("report.md", report_md);
+        $host.artifacts.write("transcript.jsonl", transcript_jsonl);
+        $host.artifacts.write("cases.jsonl", cases_jsonl);
+        return true;
+    };
+    println!("[curator] artifacts written: report.md / transcript.jsonl / cases.jsonl");
+    Ok(())
+}
+
+fn render_report(report: RunReport, policy: Policy) -> String {
+    let mut out = String::from("# Curator Run Report\n\n");
+    out.push_str("## 任务\n\n");
+    out.push_str(policy.task.as_str());
+    out.push_str("\n\n## 结果\n\n");
+    out.push_str(format!("- verdict: {}\n", report.verdict).as_str());
+    out.push_str(format!("- ok: {}\n", report.ok).as_str());
+    out.push_str("\n## 会话统计\n\n");
+    out.push_str(format!("- docs_seen: {}\n", report.stats.docs_seen).as_str());
+    out.push_str(format!("- published: {}\n", report.stats.published).as_str());
+    out.push_str(format!("- quarantined: {}\n", report.stats.quarantined).as_str());
+    out.push_str(format!("- deferred: {}\n", report.stats.deferred).as_str());
+    out.push_str(format!("- drift_retries: {}\n", report.stats.drift_retries).as_str());
+    out.push_str(format!("- partial_retries: {}\n", report.stats.partial_retries).as_str());
+    out.push_str(format!("- rejections: {}\n", report.stats.rejections).as_str());
+    out.push_str(format!("- validations_failed: {}\n", report.stats.validations_failed).as_str());
+    out.push_str("\n## 处置案例\n\n");
+    for c in report.cases {
+        out.push_str("- ");
+        out.push_str(c.doc_id.as_str());
+        out.push_str(" -> ");
+        out.push_str(c.disposition.as_str());
+        out.push_str(" (");
+        out.push_str(c.detail.as_str());
+        out.push_str(")\n");
+    }
+    out
+}
+
+scale = microkernel;
+
+project {
+    Curator         -> "src/curator/main.py"          : python,
+    EntityValidator -> "src/curator/validator.py"     : python,
+    EXTRACT_PROMPT  -> ".harness/EXTRACT.md"          : markdown,
+    ENRICH_PROMPT   -> ".harness/ENRICH.md"           : markdown,
+    HARNESS_CONFIG  -> "config/harness.yml"           : yaml,
+    EVENTS_SCHEMA   -> "config/events.schema.json"    : json,
+
+    rules {
+        struct -> "src/types/{name}.py" : python,
+        enum   -> "src/vocab/{name}.py" : python,
+        fn     -> "src/logic/{name}.py" : python,
+    }
+}

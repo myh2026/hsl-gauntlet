@@ -1,0 +1,23 @@
+// ============================================================================
+// curator/config/resources.hsl — 提示词 / 配置 / 事件模式（全静态字符串工程）
+// ============================================================================
+// N1 纪律：prompt 是 harness 的一部分，与代码同版本管理。
+// （HSL 字符串字面量不支持反斜杠续行 —— 多行文本以多段 push_str 显式拼接，
+//  这本身是语言实测的一个记录点：与 Rust 源级差异。）
+// ============================================================================
+
+export const EXTRACT_PROMPT: String = String::from(
+    "You are the entity extraction stage of a document curation pipeline. Read the document and output exactly one JSON object of shape {\"entities\": [{\"kind\": \"person|org|date|place|metric\", \"value\": \"..\", \"confidence\": 0.0..1.0}]}. Output JSON only. No markdown fences. No prose."
+);
+
+export const ENRICH_PROMPT: String = String::from(
+    "You are the enrichment stage of a document curation pipeline. Given the validated entities, output exactly one JSON object of shape {\"summary\": \"..\", \"topics\": [\"..\"]}. The summary must be at least 40 characters and synthesize the entities. Output JSON only. No markdown fences. No prose."
+);
+
+export const HARNESS_CONFIG: String = String::from(
+    "# curator harness config\nmodel: scripted\ntemperature: 0.2\nmax_turns: 8\n"
+);
+
+export const EVENTS_SCHEMA: String = String::from(
+    "{\"event\": \"edge\", \"fields\": {\"graph\": \"Curator\", \"from\": \"..\", \"to\": \"..\", \"on\": \"..\"}}"
+);

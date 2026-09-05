@@ -1,2677 +1,1465 @@
 {
-  "ts": "2026-09-05T04:12:35.593Z",
-  "topo": [
+  "ts": "2026-09-05T04:48:49.509Z",
+  "subjects": [
     {
-      "name": "Vigil",
-      "file": "subject/vigil/vigil.hsl",
-      "nodes": [
+      "subject": {
+        "id": "vigil",
+        "name": "Vigil",
+        "domain": "SRE 告警分诊（incident triage）",
+        "entry": "subject/vigil/vigil.hsl",
+        "dispositions": [
+          "committed",
+          "parked",
+          "escalated"
+        ],
+        "topoNote": "9 节点 / 17 边 / 5 守卫环 / fan-out router 三路处置"
+      },
+      "topo": [
         {
-          "name": "intake",
-          "mut": false,
-          "ty": "AlertLog"
-        },
-        {
-          "name": "triager",
-          "mut": false,
-          "ty": "Box"
-        },
-        {
-          "name": "investigator",
-          "mut": false,
-          "ty": "Investigator"
-        },
-        {
-          "name": "critic",
-          "mut": false,
-          "ty": "Critic"
-        },
-        {
-          "name": "synthesizer",
-          "mut": false,
-          "ty": "Box"
-        },
-        {
-          "name": "reviewer",
-          "mut": false,
-          "ty": "Box"
-        },
-        {
-          "name": "router",
-          "mut": false,
-          "ty": "Router"
-        },
-        {
-          "name": "ledger",
-          "mut": false,
-          "ty": "Ledger"
-        },
-        {
-          "name": "budget",
-          "mut": true,
-          "ty": "Budget"
+          "name": "Vigil",
+          "file": "subject/vigil/vigil.hsl",
+          "nodes": [
+            {
+              "name": "intake",
+              "mut": false,
+              "ty": "AlertLog"
+            },
+            {
+              "name": "triager",
+              "mut": false,
+              "ty": "Box"
+            },
+            {
+              "name": "investigator",
+              "mut": false,
+              "ty": "Investigator"
+            },
+            {
+              "name": "critic",
+              "mut": false,
+              "ty": "Critic"
+            },
+            {
+              "name": "synthesizer",
+              "mut": false,
+              "ty": "Box"
+            },
+            {
+              "name": "reviewer",
+              "mut": false,
+              "ty": "Box"
+            },
+            {
+              "name": "router",
+              "mut": false,
+              "ty": "Router"
+            },
+            {
+              "name": "ledger",
+              "mut": false,
+              "ty": "Ledger"
+            },
+            {
+              "name": "budget",
+              "mut": true,
+              "ty": "Budget"
+            }
+          ],
+          "edges": [
+            {
+              "from": "intake",
+              "to": "triager",
+              "guard": "AlertReceived",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 97
+            },
+            {
+              "from": "triager",
+              "to": "investigator",
+              "guard": "Investigate",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 98
+            },
+            {
+              "from": "triager",
+              "to": "router",
+              "guard": "Escalate",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 99
+            },
+            {
+              "from": "triager",
+              "to": "triager",
+              "guard": "Retryable",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 100
+            },
+            {
+              "from": "investigator",
+              "to": "investigator",
+              "guard": "EvidencePending",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 101
+            },
+            {
+              "from": "investigator",
+              "to": "critic",
+              "guard": "EvidenceReady",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 102
+            },
+            {
+              "from": "investigator",
+              "to": "router",
+              "guard": "EvidenceFailed",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 103
+            },
+            {
+              "from": "critic",
+              "to": "synthesizer",
+              "guard": "Sound",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 104
+            },
+            {
+              "from": "critic",
+              "to": "investigator",
+              "guard": "Insufficient",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 105
+            },
+            {
+              "from": "synthesizer",
+              "to": "reviewer",
+              "guard": "Submitted",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 106
+            },
+            {
+              "from": "reviewer",
+              "to": "ledger",
+              "guard": "Accepted",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 107
+            },
+            {
+              "from": "reviewer",
+              "to": "synthesizer",
+              "guard": "Rejected",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 108
+            },
+            {
+              "from": "router",
+              "to": "ledger",
+              "guard": "Parked",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 109
+            },
+            {
+              "from": "router",
+              "to": "ledger",
+              "guard": "Escalated",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 110
+            },
+            {
+              "from": "budget",
+              "to": "router",
+              "guard": "Exhausted",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 111
+            },
+            {
+              "from": "budget",
+              "to": "triager",
+              "guard": "DriftWarn",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 112
+            },
+            {
+              "from": "ledger",
+              "to": "intake",
+              "guard": "Committed",
+              "file": "subject/vigil/vigil.hsl",
+              "line": 113
+            }
+          ]
         }
       ],
-      "edges": [
+      "lints": [],
+      "scenarios": [
         {
-          "from": "intake",
-          "to": "triager",
-          "guard": "AlertReceived",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 97
+          "id": "n1",
+          "kind": "nominal",
+          "title": "单告警快乐路径（分诊→探查→审查→综合→审计→提交）",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/nominal/n1.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "triager",
-          "to": "investigator",
-          "guard": "Investigate",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 98
+          "id": "n2",
+          "kind": "nominal",
+          "title": "分诊即升级（critical → pager）",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/nominal/n2.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 0,
+              "escalated": 1
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "triager",
-          "to": "router",
-          "guard": "Escalate",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 99
+          "id": "n3",
+          "kind": "nominal",
+          "title": "多告警混合处置（提交 + 停靠）",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/nominal/n3.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "triager",
-          "to": "triager",
-          "guard": "Retryable",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 100
+          "id": "n4",
+          "kind": "nominal",
+          "title": "空收件箱边界（零告警）",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/nominal/n4.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "investigator",
-          "to": "investigator",
-          "guard": "EvidencePending",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 101
+          "id": "f1",
+          "kind": "fault",
+          "title": "F1 协议漂移→恢复",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f1-drift-recover.json",
+          "args": [
+            "--max-turns",
+            "8"
+          ],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "investigator",
-          "to": "critic",
-          "guard": "EvidenceReady",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 102
+          "id": "f2",
+          "kind": "fault",
+          "title": "F2 协议漂移→硬上限放弃",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f2-drift-exhaust.json",
+          "args": [
+            "--max-turns",
+            "8"
+          ],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "investigator",
-          "to": "router",
-          "guard": "EvidenceFailed",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 103
+          "id": "f3",
+          "kind": "fault",
+          "title": "F3 遥测端宕机（metrics.json 缺失）",
+          "faultClass": "tool-absence",
+          "workspace": "scenarios/faults/ws-f3",
+          "fixture": "scenarios/faults/f3-telemetry-absent.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "critic",
-          "to": "synthesizer",
-          "guard": "Sound",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 104
+          "id": "f4",
+          "kind": "fault",
+          "title": "F4 遥测数据损坏（fs.read 截断）",
+          "faultClass": "tool-corrupt",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f4-telemetry-corrupt.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 1,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "critic",
-          "to": "investigator",
-          "guard": "Insufficient",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 105
+          "id": "f5",
+          "kind": "fault",
+          "title": "F5 工具权限拒绝（capability 撤销）",
+          "faultClass": "tool-deny",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f5-tool-deny.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 1,
+            "deniedEvents": 1
+          }
         },
         {
-          "from": "synthesizer",
-          "to": "reviewer",
-          "guard": "Submitted",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 106
+          "id": "f6",
+          "kind": "fault",
+          "title": "F6 证据不足回环（指标与假设无关）",
+          "faultClass": "evidence-insufficient",
+          "workspace": "scenarios/faults/ws-f6",
+          "fixture": "scenarios/faults/f6-insufficient-evidence.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "reviewer",
-          "to": "ledger",
-          "guard": "Accepted",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 107
+          "id": "f7",
+          "kind": "fault",
+          "title": "F7 审稿驳回→返工→通过",
+          "faultClass": "review-reject-recover",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f7-review-reject-recover.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "reviewer",
-          "to": "synthesizer",
-          "guard": "Rejected",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 108
+          "id": "f8",
+          "kind": "fault",
+          "title": "F8 审稿驳回→预算耗尽→升级",
+          "faultClass": "review-reject-exhaust",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f8-review-exhaust.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 0,
+              "parked": 0,
+              "escalated": 1
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "router",
-          "to": "ledger",
-          "guard": "Parked",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 109
+          "id": "f9",
+          "kind": "fault",
+          "title": "F9 会话轮预算耗尽（停靠收束）",
+          "faultClass": "budget-exhausted",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f9-turn-budget.json",
+          "args": [
+            "--max-turns",
+            "1"
+          ],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "budget-exhausted",
+            "dispositions": {
+              "committed": 1,
+              "parked": 1,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "router",
-          "to": "ledger",
-          "guard": "Escalated",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 110
+          "id": "f10",
+          "kind": "fault",
+          "title": "F10 草稿协议漂移→纠错→通过",
+          "faultClass": "model-protocol-drift",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f10-draft-drift.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 0,
+            "deniedEvents": 0
+          }
         },
         {
-          "from": "budget",
-          "to": "router",
-          "guard": "Exhausted",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 111
-        },
-        {
-          "from": "budget",
-          "to": "triager",
-          "guard": "DriftWarn",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 112
-        },
-        {
-          "from": "ledger",
-          "to": "intake",
-          "guard": "Committed",
-          "file": "subject/vigil/vigil.hsl",
-          "line": 113
+          "id": "f11",
+          "kind": "fault",
+          "title": "F11 协议字段损坏→软漂移→恢复",
+          "faultClass": "tool-corrupt",
+          "workspace": "scenarios/nominal/ws-n1",
+          "fixture": "scenarios/faults/f11-fields-corrupt.json",
+          "args": [],
+          "expect": {
+            "exit": 0,
+            "ok": true,
+            "verdict": "inbox-drained",
+            "dispositions": {
+              "committed": 1,
+              "parked": 0,
+              "escalated": 0
+            },
+            "faultEvents": 1,
+            "deniedEvents": 0
+          }
         }
-      ]
+      ],
+      "outcomes": [
+        {
+          "id": "n1",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 187,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "n2",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "escalated": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Escalate",
+            "Escalated"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->router:Escalate",
+            "router->ledger:Escalated"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Escalate",
+            "Escalated"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 126,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "n3",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1,
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed",
+            "AlertReceived",
+            "Escalate",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed",
+            "intake->triager:AlertReceived",
+            "triager->router:Escalate",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed",
+            "Escalate",
+            "Parked"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 125,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "n4",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {},
+          "edgeSeq": [],
+          "edgeFull": [],
+          "edgeSet": [],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 125,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f1",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Retryable",
+            "AlertReceived",
+            "Retryable",
+            "DriftWarn",
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed",
+            "DriftWarn"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "budget->triager:DriftWarn",
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed",
+            "budget->triager:DriftWarn"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Retryable",
+            "DriftWarn",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 119,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f2",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Retryable",
+            "AlertReceived",
+            "Retryable",
+            "DriftWarn",
+            "AlertReceived",
+            "Retryable",
+            "DriftWarn",
+            "AlertReceived",
+            "Retryable",
+            "Parked",
+            "DriftWarn"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "budget->triager:DriftWarn",
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "budget->triager:DriftWarn",
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "router->ledger:Parked",
+            "budget->triager:DriftWarn"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Retryable",
+            "DriftWarn",
+            "Parked"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 116,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f3",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->router:EvidenceFailed",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 128,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f4",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->router:EvidenceFailed",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "faultEvents": 1,
+          "deniedEvents": 0,
+          "elapsedMs": 132,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f5",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->router:EvidenceFailed",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "faultEvents": 1,
+          "deniedEvents": 1,
+          "elapsedMs": 119,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f6",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Insufficient",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->investigator:Insufficient",
+            "investigator->router:EvidenceFailed",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Insufficient",
+            "EvidenceFailed",
+            "Parked"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 113,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f7",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Rejected",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->synthesizer:Rejected",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Rejected",
+            "Accepted",
+            "Committed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 118,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f8",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "escalated": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Rejected",
+            "Submitted",
+            "Rejected",
+            "Escalated"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->synthesizer:Rejected",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->synthesizer:Rejected",
+            "router->ledger:Escalated"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Rejected",
+            "Escalated"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 120,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f9",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "budget-exhausted",
+          "dispositions": {
+            "committed": 1,
+            "parked": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed",
+            "Exhausted",
+            "Parked"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed",
+            "budget->router:Exhausted",
+            "router->ledger:Parked"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed",
+            "Exhausted",
+            "Parked"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 138,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f10",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "faultEvents": 0,
+          "deniedEvents": 0,
+          "elapsedMs": 119,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        },
+        {
+          "id": "f11",
+          "exitCode": 0,
+          "ok": true,
+          "verdict": "inbox-drained",
+          "dispositions": {
+            "committed": 1
+          },
+          "edgeSeq": [
+            "AlertReceived",
+            "Retryable",
+            "AlertReceived",
+            "Investigate",
+            "EvidencePending",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "edgeFull": [
+            "intake->triager:AlertReceived",
+            "triager->triager:Retryable",
+            "intake->triager:AlertReceived",
+            "triager->investigator:Investigate",
+            "investigator->investigator:EvidencePending",
+            "investigator->investigator:EvidencePending",
+            "investigator->critic:EvidenceReady",
+            "critic->synthesizer:Sound",
+            "synthesizer->reviewer:Submitted",
+            "reviewer->ledger:Accepted",
+            "ledger->intake:Committed"
+          ],
+          "edgeSet": [
+            "AlertReceived",
+            "Retryable",
+            "Investigate",
+            "EvidencePending",
+            "EvidenceReady",
+            "Sound",
+            "Submitted",
+            "Accepted",
+            "Committed"
+          ],
+          "faultEvents": 1,
+          "deniedEvents": 0,
+          "elapsedMs": 124,
+          "conformanceDeviations": [],
+          "invariantViolations": []
+        }
+      ],
+      "coverage": {
+        "edgeCoverage": 1,
+        "declared": [
+          {
+            "from": "intake",
+            "to": "triager",
+            "guard": "AlertReceived",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 97
+          },
+          {
+            "from": "triager",
+            "to": "investigator",
+            "guard": "Investigate",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 98
+          },
+          {
+            "from": "triager",
+            "to": "router",
+            "guard": "Escalate",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 99
+          },
+          {
+            "from": "triager",
+            "to": "triager",
+            "guard": "Retryable",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 100
+          },
+          {
+            "from": "investigator",
+            "to": "investigator",
+            "guard": "EvidencePending",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 101
+          },
+          {
+            "from": "investigator",
+            "to": "critic",
+            "guard": "EvidenceReady",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 102
+          },
+          {
+            "from": "investigator",
+            "to": "router",
+            "guard": "EvidenceFailed",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 103
+          },
+          {
+            "from": "critic",
+            "to": "synthesizer",
+            "guard": "Sound",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 104
+          },
+          {
+            "from": "critic",
+            "to": "investigator",
+            "guard": "Insufficient",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 105
+          },
+          {
+            "from": "synthesizer",
+            "to": "reviewer",
+            "guard": "Submitted",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 106
+          },
+          {
+            "from": "reviewer",
+            "to": "ledger",
+            "guard": "Accepted",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 107
+          },
+          {
+            "from": "reviewer",
+            "to": "synthesizer",
+            "guard": "Rejected",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 108
+          },
+          {
+            "from": "router",
+            "to": "ledger",
+            "guard": "Parked",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 109
+          },
+          {
+            "from": "router",
+            "to": "ledger",
+            "guard": "Escalated",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 110
+          },
+          {
+            "from": "budget",
+            "to": "router",
+            "guard": "Exhausted",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 111
+          },
+          {
+            "from": "budget",
+            "to": "triager",
+            "guard": "DriftWarn",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 112
+          },
+          {
+            "from": "ledger",
+            "to": "intake",
+            "guard": "Committed",
+            "file": "subject/vigil/vigil.hsl",
+            "line": 113
+          }
+        ],
+        "neverFired": [],
+        "faultOnly": [
+          "Retryable",
+          "EvidenceFailed",
+          "Insufficient",
+          "Rejected",
+          "Exhausted",
+          "DriftWarn"
+        ],
+        "fired": {
+          "AlertReceived": [
+            "n1",
+            "n2",
+            "n3",
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Investigate": [
+            "n1",
+            "n3",
+            "f1",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "EvidencePending": [
+            "n1",
+            "n3",
+            "f1",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "EvidenceReady": [
+            "n1",
+            "n3",
+            "f1",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Sound": [
+            "n1",
+            "n3",
+            "f1",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Submitted": [
+            "n1",
+            "n3",
+            "f1",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Accepted": [
+            "n1",
+            "n3",
+            "f1",
+            "f7",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Committed": [
+            "n1",
+            "n3",
+            "f1",
+            "f7",
+            "f9",
+            "f10",
+            "f11"
+          ],
+          "Escalate": [
+            "n2",
+            "n3"
+          ],
+          "Escalated": [
+            "n2",
+            "f8"
+          ],
+          "Parked": [
+            "n3",
+            "f2",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f9"
+          ],
+          "Retryable": [
+            "f1",
+            "f2",
+            "f11"
+          ],
+          "DriftWarn": [
+            "f1",
+            "f2"
+          ],
+          "EvidenceFailed": [
+            "f3",
+            "f4",
+            "f5",
+            "f6"
+          ],
+          "Insufficient": [
+            "f6"
+          ],
+          "Rejected": [
+            "f7",
+            "f8"
+          ],
+          "Exhausted": [
+            "f9"
+          ]
+        }
+      },
+      "mutation": {
+        "score": 0,
+        "killed": 0,
+        "total": 0,
+        "results": []
+      }
     }
   ],
-  "lints": [],
-  "scenarios": [
-    {
-      "id": "n1",
-      "kind": "nominal",
-      "title": "单告警快乐路径（分诊→探查→审查→综合→审计→提交）",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/nominal/n1.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "n2",
-      "kind": "nominal",
-      "title": "分诊即升级（critical → pager）",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/nominal/n2.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 0,
-          "escalated": 1
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "n3",
-      "kind": "nominal",
-      "title": "多告警混合处置（提交 + 停靠）",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/nominal/n3.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "n4",
-      "kind": "nominal",
-      "title": "空收件箱边界（零告警）",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/nominal/n4.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f1",
-      "kind": "fault",
-      "title": "F1 协议漂移→恢复",
-      "faultClass": "model-protocol-drift",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f1-drift-recover.json",
-      "args": [
-        "--max-turns",
-        "8"
-      ],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f2",
-      "kind": "fault",
-      "title": "F2 协议漂移→硬上限放弃",
-      "faultClass": "model-protocol-drift",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f2-drift-exhaust.json",
-      "args": [
-        "--max-turns",
-        "8"
-      ],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f3",
-      "kind": "fault",
-      "title": "F3 遥测端宕机（metrics.json 缺失）",
-      "faultClass": "tool-absence",
-      "workspace": "scenarios/faults/ws-f3",
-      "fixture": "scenarios/faults/f3-telemetry-absent.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f4",
-      "kind": "fault",
-      "title": "F4 遥测数据损坏（fs.read 截断）",
-      "faultClass": "tool-corrupt",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f4-telemetry-corrupt.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 1,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f5",
-      "kind": "fault",
-      "title": "F5 工具权限拒绝（capability 撤销）",
-      "faultClass": "tool-deny",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f5-tool-deny.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 1,
-        "deniedEvents": 1
-      }
-    },
-    {
-      "id": "f6",
-      "kind": "fault",
-      "title": "F6 证据不足回环（指标与假设无关）",
-      "faultClass": "evidence-insufficient",
-      "workspace": "scenarios/faults/ws-f6",
-      "fixture": "scenarios/faults/f6-insufficient-evidence.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f7",
-      "kind": "fault",
-      "title": "F7 审稿驳回→返工→通过",
-      "faultClass": "review-reject-recover",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f7-review-reject-recover.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f8",
-      "kind": "fault",
-      "title": "F8 审稿驳回→预算耗尽→升级",
-      "faultClass": "review-reject-exhaust",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f8-review-exhaust.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 0,
-          "parked": 0,
-          "escalated": 1
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f9",
-      "kind": "fault",
-      "title": "F9 会话轮预算耗尽（停靠收束）",
-      "faultClass": "budget-exhausted",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f9-turn-budget.json",
-      "args": [
-        "--max-turns",
-        "1"
-      ],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "budget-exhausted",
-        "dispositions": {
-          "committed": 1,
-          "parked": 1,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f10",
-      "kind": "fault",
-      "title": "F10 草稿协议漂移→纠错→通过",
-      "faultClass": "model-protocol-drift",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f10-draft-drift.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 0,
-        "deniedEvents": 0
-      }
-    },
-    {
-      "id": "f11",
-      "kind": "fault",
-      "title": "F11 协议字段损坏→软漂移→恢复",
-      "faultClass": "tool-corrupt",
-      "workspace": "scenarios/nominal/ws-n1",
-      "fixture": "scenarios/faults/f11-fields-corrupt.json",
-      "args": [],
-      "expect": {
-        "exit": 0,
-        "ok": true,
-        "verdict": "inbox-drained",
-        "dispositions": {
-          "committed": 1,
-          "parked": 0,
-          "escalated": 0
-        },
-        "faultEvents": 1,
-        "deniedEvents": 0
-      }
-    }
-  ],
-  "outcomes": [
-    {
-      "id": "n1",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 154,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "n2",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 0,
-        "escalated": 1
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Escalate",
-        "Escalated"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->router:Escalate",
-        "router->ledger:Escalated"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Escalate",
-        "Escalated"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 124,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "n3",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed",
-        "AlertReceived",
-        "Escalate",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed",
-        "intake->triager:AlertReceived",
-        "triager->router:Escalate",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed",
-        "Escalate",
-        "Parked"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 137,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "n4",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [],
-      "edgeFull": [],
-      "edgeSet": [],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 115,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f1",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Retryable",
-        "AlertReceived",
-        "Retryable",
-        "DriftWarn",
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed",
-        "DriftWarn"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "budget->triager:DriftWarn",
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed",
-        "budget->triager:DriftWarn"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Retryable",
-        "DriftWarn",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 131,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f2",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Retryable",
-        "AlertReceived",
-        "Retryable",
-        "DriftWarn",
-        "AlertReceived",
-        "Retryable",
-        "DriftWarn",
-        "AlertReceived",
-        "Retryable",
-        "Parked",
-        "DriftWarn"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "budget->triager:DriftWarn",
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "budget->triager:DriftWarn",
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "router->ledger:Parked",
-        "budget->triager:DriftWarn"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Retryable",
-        "DriftWarn",
-        "Parked"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 168,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f3",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->router:EvidenceFailed",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 128,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f4",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->router:EvidenceFailed",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "faultEvents": 1,
-      "deniedEvents": 0,
-      "elapsedMs": 131,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f5",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->router:EvidenceFailed",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "faultEvents": 1,
-      "deniedEvents": 1,
-      "elapsedMs": 150,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f6",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Insufficient",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->investigator:Insufficient",
-        "investigator->router:EvidenceFailed",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Insufficient",
-        "EvidenceFailed",
-        "Parked"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 125,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f7",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Rejected",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->synthesizer:Rejected",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Rejected",
-        "Accepted",
-        "Committed"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 125,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f8",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 0,
-        "parked": 0,
-        "escalated": 1
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Rejected",
-        "Submitted",
-        "Rejected",
-        "Escalated"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->synthesizer:Rejected",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->synthesizer:Rejected",
-        "router->ledger:Escalated"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Rejected",
-        "Escalated"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 142,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f9",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "budget-exhausted",
-      "dispositions": {
-        "committed": 1,
-        "parked": 1,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed",
-        "Exhausted",
-        "Parked"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed",
-        "budget->router:Exhausted",
-        "router->ledger:Parked"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed",
-        "Exhausted",
-        "Parked"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 124,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f10",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "faultEvents": 0,
-      "deniedEvents": 0,
-      "elapsedMs": 164,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    },
-    {
-      "id": "f11",
-      "exitCode": 0,
-      "ok": true,
-      "verdict": "inbox-drained",
-      "dispositions": {
-        "committed": 1,
-        "parked": 0,
-        "escalated": 0
-      },
-      "edgeSeq": [
-        "AlertReceived",
-        "Retryable",
-        "AlertReceived",
-        "Investigate",
-        "EvidencePending",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "edgeFull": [
-        "intake->triager:AlertReceived",
-        "triager->triager:Retryable",
-        "intake->triager:AlertReceived",
-        "triager->investigator:Investigate",
-        "investigator->investigator:EvidencePending",
-        "investigator->investigator:EvidencePending",
-        "investigator->critic:EvidenceReady",
-        "critic->synthesizer:Sound",
-        "synthesizer->reviewer:Submitted",
-        "reviewer->ledger:Accepted",
-        "ledger->intake:Committed"
-      ],
-      "edgeSet": [
-        "AlertReceived",
-        "Retryable",
-        "Investigate",
-        "EvidencePending",
-        "EvidenceReady",
-        "Sound",
-        "Submitted",
-        "Accepted",
-        "Committed"
-      ],
-      "faultEvents": 1,
-      "deniedEvents": 0,
-      "elapsedMs": 133,
-      "conformanceDeviations": [],
-      "invariantViolations": []
-    }
-  ],
-  "coverage": {
-    "edgeCoverage": 1,
-    "declared": [
-      {
-        "from": "intake",
-        "to": "triager",
-        "guard": "AlertReceived",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 97
-      },
-      {
-        "from": "triager",
-        "to": "investigator",
-        "guard": "Investigate",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 98
-      },
-      {
-        "from": "triager",
-        "to": "router",
-        "guard": "Escalate",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 99
-      },
-      {
-        "from": "triager",
-        "to": "triager",
-        "guard": "Retryable",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 100
-      },
-      {
-        "from": "investigator",
-        "to": "investigator",
-        "guard": "EvidencePending",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 101
-      },
-      {
-        "from": "investigator",
-        "to": "critic",
-        "guard": "EvidenceReady",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 102
-      },
-      {
-        "from": "investigator",
-        "to": "router",
-        "guard": "EvidenceFailed",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 103
-      },
-      {
-        "from": "critic",
-        "to": "synthesizer",
-        "guard": "Sound",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 104
-      },
-      {
-        "from": "critic",
-        "to": "investigator",
-        "guard": "Insufficient",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 105
-      },
-      {
-        "from": "synthesizer",
-        "to": "reviewer",
-        "guard": "Submitted",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 106
-      },
-      {
-        "from": "reviewer",
-        "to": "ledger",
-        "guard": "Accepted",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 107
-      },
-      {
-        "from": "reviewer",
-        "to": "synthesizer",
-        "guard": "Rejected",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 108
-      },
-      {
-        "from": "router",
-        "to": "ledger",
-        "guard": "Parked",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 109
-      },
-      {
-        "from": "router",
-        "to": "ledger",
-        "guard": "Escalated",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 110
-      },
-      {
-        "from": "budget",
-        "to": "router",
-        "guard": "Exhausted",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 111
-      },
-      {
-        "from": "budget",
-        "to": "triager",
-        "guard": "DriftWarn",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 112
-      },
-      {
-        "from": "ledger",
-        "to": "intake",
-        "guard": "Committed",
-        "file": "subject/vigil/vigil.hsl",
-        "line": 113
-      }
-    ],
-    "neverFired": [],
-    "faultOnly": [
-      "Retryable",
-      "EvidenceFailed",
-      "Insufficient",
-      "Rejected",
-      "Exhausted",
-      "DriftWarn"
-    ],
-    "fired": {
-      "AlertReceived": [
-        "n1",
-        "n2",
-        "n3",
-        "f1",
-        "f2",
-        "f3",
-        "f4",
-        "f5",
-        "f6",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Investigate": [
-        "n1",
-        "n3",
-        "f1",
-        "f3",
-        "f4",
-        "f5",
-        "f6",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "EvidencePending": [
-        "n1",
-        "n3",
-        "f1",
-        "f3",
-        "f4",
-        "f5",
-        "f6",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "EvidenceReady": [
-        "n1",
-        "n3",
-        "f1",
-        "f6",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Sound": [
-        "n1",
-        "n3",
-        "f1",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Submitted": [
-        "n1",
-        "n3",
-        "f1",
-        "f7",
-        "f8",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Accepted": [
-        "n1",
-        "n3",
-        "f1",
-        "f7",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Committed": [
-        "n1",
-        "n3",
-        "f1",
-        "f7",
-        "f9",
-        "f10",
-        "f11"
-      ],
-      "Escalate": [
-        "n2",
-        "n3"
-      ],
-      "Escalated": [
-        "n2",
-        "f8"
-      ],
-      "Parked": [
-        "n3",
-        "f2",
-        "f3",
-        "f4",
-        "f5",
-        "f6",
-        "f9"
-      ],
-      "Retryable": [
-        "f1",
-        "f2",
-        "f11"
-      ],
-      "DriftWarn": [
-        "f1",
-        "f2"
-      ],
-      "EvidenceFailed": [
-        "f3",
-        "f4",
-        "f5",
-        "f6"
-      ],
-      "Insufficient": [
-        "f6"
-      ],
-      "Rejected": [
-        "f7",
-        "f8"
-      ],
-      "Exhausted": [
-        "f9"
-      ]
-    }
-  },
-  "mutation": {
-    "score": 0.9629629629629629,
-    "killed": 26,
-    "total": 27,
-    "results": [
-      {
-        "id": "M1-E1",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge intake -> triager on IntakeEvent::AlertReceived;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E2",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge triager -> investigator on Triage::Investigate;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E3",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge triager -> router on Triage::Escalate;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E4",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge triager -> triager on Triage::Retryable;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-5: DriftWarn at #2 with only 0 prior Retryable",
-              "INV-5: DriftWarn at #12 with only 0 prior Retryable"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "INV-5: DriftWarn at #2 with only 0 prior Retryable",
-              "INV-5: DriftWarn at #4 with only 0 prior Retryable",
-              "INV-5: DriftWarn at #7 with only 0 prior Retryable"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E5",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge investigator -> investigator on Probe::EvidencePending;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E6",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge investigator -> critic on Probe::EvidenceReady;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "INV-4: sound(1) > evidence-ready(0)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E7",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge investigator -> router on Probe::EvidenceFailed;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E8",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge critic -> synthesizer on Critique::Sound;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-3: Submitted at #10 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound",
-              "INV-3: Submitted at #7 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound",
-              "INV-3: Submitted at #7 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "INV-3: Submitted at #5 with no prior Sound"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "INV-3: Submitted at #7 with no prior Sound"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E9",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge critic -> investigator on Critique::Insufficient;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E10",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge synthesizer -> reviewer on Draft::Submitted;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(1) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "INV-2: accepted(0) + rejected(2) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "INV-2: accepted(1) + rejected(0) > submitted(0)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E11",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge reviewer -> ledger on Verdict::Accepted;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "INV-7: committed cases(1) != Accepted edges(0)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E12",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge reviewer -> synthesizer on Verdict::Rejected;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E13",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge router -> ledger on Route::Parked;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-8: parked cases(1) != Parked edges(0)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E14",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge router -> ledger on Route::Escalated;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n2",
-            "deviations": [
-              "INV-8: escalated cases(1) != Escalated edges(0)"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "INV-8: escalated cases(1) != Escalated edges(0)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E15",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge budget -> router on BudgetSignal::Exhausted;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-6: verdict=budget-exhausted but no Exhausted edge"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E16",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge budget -> triager on BudgetSignal::DriftWarn;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M1-E17",
-        "operator": "M1 EDGE_DEL",
-        "description": "删除边声明: edge ledger -> intake on AdvanceSignal::Committed;",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "INV-1: Accepted at #7 not followed by Committed (next=EOF)"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "INV-1: Accepted at #7 not followed by Committed (next=AlertReceived)"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "INV-1: Accepted at #12 not followed by Committed (next=DriftWarn)"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "INV-1: Accepted at #9 not followed by Committed (next=EOF)"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-1: Accepted at #7 not followed by Committed (next=Exhausted)"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "INV-1: Accepted at #7 not followed by Committed (next=EOF)"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "INV-1: Accepted at #9 not followed by Committed (next=EOF)"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M2-R1",
-        "operator": "M2 EDGE_REDIRECT",
-        "description": "investigator->critic 改为 investigator->router（EvidenceReady）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M2-R2",
-        "operator": "M2 EDGE_REDIRECT",
-        "description": "reviewer->ledger 改为 reviewer->synthesizer（Accepted）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M2-R3",
-        "operator": "M2 EDGE_REDIRECT",
-        "description": "ledger->intake 改为 ledger->triager（Committed）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M3-G1",
-        "operator": "M3 GUARD_SWAP",
-        "description": "triager->router 守卫 Escalate 换成 Retryable（G-8 违规预期）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M3-G2",
-        "operator": "M3 GUARD_SWAP",
-        "description": "budget->router 守卫 Exhausted 换成 Within（守卫语义漂移）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "n4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "INV-6: verdict=budget-exhausted but no Exhausted edge"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "differential: topological/behavioral signature changed"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M4-BUDGET",
-        "operator": "M4 BUDGET_OFF",
-        "description": "轮预算边界 off-by-one（>= -> >）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f9",
-            "deviations": [
-              "parked 2 != 1"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M5-ROUTE",
-        "operator": "M5 ROUTE_FLIP",
-        "description": "路由分流条件翻转（critical -> warning）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n2",
-            "deviations": [
-              "parked 1 != 0",
-              "escalated 0 != 1"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f2",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f3",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f4",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f5",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f6",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          },
-          {
-            "scenario": "f8",
-            "deviations": [
-              "parked 1 != 0",
-              "escalated 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "parked 0 != 1",
-              "escalated 1 != 0"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M6-CRITIC",
-        "operator": "M6 CRITIC_THRESH",
-        "description": "审查闸门阈值松动（metrics_total >= 2 -> >= 1）",
-        "killed": false,
-        "killedBy": []
-      },
-      {
-        "id": "M7-DRIFT",
-        "operator": "M7 DRIFT_CAP",
-        "description": "漂移硬上限提升（*2 -> *3）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "f2",
-            "deviations": [
-              "exit 1 != 0",
-              "ok false != true",
-              "verdict (missing) != inbox-drained",
-              "parked 0 != 1"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "M8-COMMIT",
-        "operator": "M8 COMMIT_DROP",
-        "description": "提交路径丢弃案例落盘（cases.push 删除）",
-        "killed": true,
-        "killedBy": [
-          {
-            "scenario": "n1",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "n3",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f1",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f7",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f9",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f10",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          },
-          {
-            "scenario": "f11",
-            "deviations": [
-              "committed 0 != 1"
-            ]
-          }
-        ]
-      }
-    ]
+  "aggregate": {
+    "subjectCount": 1,
+    "scenarios": 15,
+    "mutants": 0,
+    "killed": 0,
+    "edgeCoverageAvg": 1
   }
 }

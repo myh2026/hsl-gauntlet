@@ -597,3 +597,64 @@ dhv-ts intValOf 与 dhv expr_int_val 双端同构。
   （15/15 场景、100% 边覆盖、96.3% 变异杀死率）；
 - cargo test 9+5+1 全过（dhv 侧 emit 为 contract 级，不受本轮影响）；
 - vendor 同步：dhv-ts 三后端文件 + emit 语料 + runner + conformance 脚本。
+
+---
+
+# 第八轮实测（第二 SUT 泛化实验 · 2026-09-05 · cron 长程任务）
+
+> 本轮不修上游工具链（vendor 零改动），而是用第二份全 HSL SUT（Curator，
+> 文档策展管线，8 节点 / 16 边 / 4 守卫环）实测 HSL 的**域泛化表达力**
+> 与 Gauntlet 框架的 SUT 无关性。全部细节见 docs/GENERALIZATION.md。
+
+## 22. 第八轮确认的问题（#L-22：native 值模型断层）
+
+Curator 需要把抽取模型输出解析成 `Vec<Entity>`（struct 数组）。探针显示
+native 块返回 plain object 数组后**字段读取可用**，于是首版直接返回结构体
+数组 —— 运行期在 `entities.clone()` 处崩溃：
+
+```
+✗ 运行期错误：foreign 没有方法 "clone"
+```
+
+根因：native 返回的 plain object 不带运行时 `__struct` 标记 → 类型名
+`foreign` → 字段读取走「foreign 直通」通道可用，但 clone/方法/S 规则全失效。
+Vigil 六轮从未踩到，因为其 native 只返回 String/Map/number。
+
+**修复取向**（Curator 侧落地）：native 退回 I/O 搬运（JSON → 拍平字符串
+`"kind~value~conf|…"`），HSL 侧 `split_once` 逐字段重建 + `parse::<f64>()`
+恢复置信度。N1 纪律（逻辑不进 native）的值模型版本。
+**上游登记**：#L-22（native 块缺结构体构造通道 / checker 缺 foreign 返回值
+告警）—— 建议提供 `$host.make("Entity", {...})` 类官方通道。
+
+## 23. 第八轮语言层观察
+
+- **首版 check**：15 模块 0 error / 0 warning —— 唯一语法差异是字符串
+  字面量**不支持反斜杠续行**（Rust 有），改单行即过。
+- **split_once 是 Vec 重建的唯一定式**：无内置 `split()`，循环 +
+  `Option<Vec<String>>` 模式匹配（`Some(pair) => pair[0]/pair[1]`）成为
+  拍平协议的标准重建写法 —— 可用，但每个解析器重复 12 行，值得 std 化。
+- **f64 域在真实域数据上落地**：Entity.confidence 走 `parse::<f64>()` +
+  阈值比较（S-14/S-15 链条首次被 SUT 数据面真实使用）。
+- **`v[0]` 索引 + let 绑定**是安全写法（直接 `entities[0].clone().kind`
+  链式调用未测，保守起见用绑定中转）。
+
+## 24. 第八轮框架层结果（泛化主张成立）
+
+- **框架 SUT 专属代码：0 行**。Vigil 场景/不变式/变异点（原 164 行）迁入
+  `subject/vigil/binding.ts` —— 实验顺带发现它们本就是被误分类的 SUT 资产。
+- Curator：15/15 场景 / 11/11 不变式 / 100% 边覆盖 / **100% 变异杀死率**
+  （26/26）；聚合 2 SUT · 30 场景 · 53 变异体 · 98.1%。
+- 顺带修复历史判据缺口：`cli.ts all` 此前不因场景偏差退出非零（RED 注入
+  实证 + 修复：偏差/不变式违反/无效变异体 → 退出 1）。
+- 不变式陈述过强教训复现：CINV-4 首版「EnrichmentComplete ≤ EntitiesValid」
+  被发布返工回环证伪（同一校验过的实体可被多次富集）→ 修正为守恒形式
+  「≤ EntitiesValid + PublicationRejected」。与 Vigil INV-3 同类：
+  **修复回环是不变式陈述的主要证伪源**。
+
+## 25. 第八轮元发现（第八课：判据出口也是被测对象）
+
+RED 注入在「双 SUT 管线」上转红时，暴露 `all` 模式自初版就不传播场景偏差
+到退出码 —— watchdog 的 GREEN 在该组合下可能是假绿。历轮 RED 注入恰好
+都走了 runner 异常路径而没踩中。**教训：每新增一个判定出口（新 CLI 模式、
+新聚合层、新管线组合），都要重新做 RED 注入** —— 护栏的可靠性不是护栏
+的属性，是「护栏 × 出口矩阵」的属性。

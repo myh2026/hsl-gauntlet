@@ -1,0 +1,135 @@
+// ============================================================================
+// curator/types/state.hsl — 策略 / 预算 / 会话统计 / 会话状态 / 运行报告
+// ============================================================================
+// 文法覆盖：const 字面量族（十六进制/下划线/算术）/ turbofish parse::<T>() /
+//           HashMap 装配 / Option 链 / u32 计数
+// ============================================================================
+
+import { Message, CaseRecord } from "./docs.hsl";
+import { BudgetSignal } from "./vocab.hsl";
+import { HarnessError } from "./errors.hsl";
+
+export const DEFAULT_MAX_TURNS: u32 = 0x08;          // 8 —— 会话总轮预算（十六进制）
+export const DEFAULT_MAX_DRIFT: u32 = 2;              // 抽取协议漂移上限
+export const DEFAULT_MAX_VALIDATE: u32 = 2;           // 校验修复回环上限（共 3 次抽取）
+export const DEFAULT_MAX_PARTIAL: u32 = 2;            // 富集部分完成重试上限
+export const DEFAULT_MAX_PUB_ROUNDS: u32 = 4_000 / 2_000; // 发布返工上限（下划线 + 算术）
+
+/// 运行策略（CLI --flags 装配，经 $host.config 读取）。
+#[derive(Debug, Clone)]
+export struct Policy {
+    model: String,           // scripted | live
+    temperature: f64,
+    max_turns: u32,
+    max_drift: u32,
+    max_validate: u32,
+    max_partial: u32,
+    max_pub_rounds: u32,
+    workspace: String,
+    task: String,
+}
+
+impl Policy {
+    fn from_config() -> Result<Policy, HarnessError> {
+        let cfg: HashMap<String, String> = native typescript {
+            const c = $host.config;
+            const m = new Map();
+            m.set("model", String(c.model));
+            m.set("temperature", String(c.temperature));
+            m.set("max_turns", String(c.maxTurns));
+            m.set("workspace", String(c.workspace));
+            m.set("task", String(c.task));
+            return m;
+        };
+        let model = cfg.get("model").unwrap_or(String::from("scripted"));
+        let temperature = cfg.get("temperature").unwrap_or(String::from("0.2")).parse::<f64>()?;
+        let max_turns = cfg.get("max_turns").unwrap_or(String::from("24")).parse::<u32>()?;
+        let workspace = cfg.get("workspace").unwrap_or(String::from("."));
+        let task = cfg.get("task").unwrap_or(String::from(""));
+        Ok(Policy {
+            model,
+            temperature,
+            max_turns,
+            max_drift: DEFAULT_MAX_DRIFT,
+            max_validate: DEFAULT_MAX_VALIDATE,
+            max_partial: DEFAULT_MAX_PARTIAL,
+            max_pub_rounds: DEFAULT_MAX_PUB_ROUNDS,
+            workspace,
+            task,
+        })
+    }
+}
+
+/// 会话预算（在 graph 体内经 bump! 宏原地推进）。
+#[derive(Debug, Clone)]
+export struct Budget {
+    turns_used: u32,
+    drift_count: u32,
+}
+
+impl Budget {
+    fn zero() -> Budget {
+        Budget { turns_used: 0, drift_count: 0 }
+    }
+
+    fn status(self, policy: Policy) -> BudgetSignal {
+        if self.turns_used >= policy.max_turns {
+            BudgetSignal::TurnExhausted
+        } else if self.drift_count >= policy.max_drift {
+            BudgetSignal::DriftAlarm
+        } else {
+            BudgetSignal::Within
+        }
+    }
+}
+
+/// 会话统计（产物 report.md 的数据面）。
+#[derive(Debug, Clone)]
+export struct SessionStats {
+    docs_seen: u32,
+    published: u32,
+    quarantined: u32,
+    deferred: u32,
+    drift_retries: u32,
+    partial_retries: u32,
+    rejections: u32,
+    validations_failed: u32,
+}
+
+impl SessionStats {
+    fn zero() -> SessionStats {
+        SessionStats {
+            docs_seen: 0,
+            published: 0,
+            quarantined: 0,
+            deferred: 0,
+            drift_retries: 0,
+            partial_retries: 0,
+            rejections: 0,
+            validations_failed: 0,
+        }
+    }
+}
+
+/// 会话状态（graph 主参数；mut 参数 + 字段级原地推进）。
+/// 预算不在此层：budget 是 graph 体内的 mut 节点（本地可变顶点状态）。
+#[derive(Debug, Clone)]
+export struct SessionState {
+    policy: Policy,
+    transcript: Vec<Message>,
+    stats: SessionStats,
+    batch: Vec<String>,      // 文档原始行（fixture batch 轨道加载）
+    doc_idx: u32,            // 已拉取游标
+    drift_noted: bool,       // DriftAlarm 提醒只注入一次
+}
+
+/// 运行报告（harness 出口产物）。
+#[derive(Debug, Clone)]
+export struct RunReport {
+    task: String,
+    verdict: String,         // batch-drained / budget-exhausted
+    cases: Vec<CaseRecord>,
+    stats: SessionStats,
+    transcript: Vec<Message>,
+    ok: bool,
+}
