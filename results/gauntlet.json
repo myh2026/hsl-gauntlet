@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-05T02:58:16.270Z",
+  "ts": "2026-09-05T03:13:17.258Z",
   "topo": [
     {
       "name": "Vigil",
@@ -542,7 +542,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 482,
+      "elapsedMs": 226,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -573,7 +573,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 215,
+      "elapsedMs": 211,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -629,7 +629,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 366,
+      "elapsedMs": 428,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -648,7 +648,7 @@
       "edgeSet": [],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 228,
+      "elapsedMs": 217,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -710,7 +710,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 322,
+      "elapsedMs": 289,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -760,7 +760,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 264,
+      "elapsedMs": 256,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -801,7 +801,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 243,
+      "elapsedMs": 276,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -842,7 +842,7 @@
       ],
       "faultEvents": 1,
       "deniedEvents": 0,
-      "elapsedMs": 258,
+      "elapsedMs": 276,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -883,7 +883,7 @@
       ],
       "faultEvents": 1,
       "deniedEvents": 1,
-      "elapsedMs": 242,
+      "elapsedMs": 290,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -928,7 +928,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 269,
+      "elapsedMs": 259,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -981,7 +981,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 201,
+      "elapsedMs": 361,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -1033,7 +1033,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 286,
+      "elapsedMs": 287,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -1087,7 +1087,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 299,
+      "elapsedMs": 292,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -1135,7 +1135,7 @@
       ],
       "faultEvents": 0,
       "deniedEvents": 0,
-      "elapsedMs": 312,
+      "elapsedMs": 296,
       "conformanceDeviations": [],
       "invariantViolations": []
     },
@@ -1188,7 +1188,7 @@
       ],
       "faultEvents": 1,
       "deniedEvents": 0,
-      "elapsedMs": 279,
+      "elapsedMs": 259,
       "conformanceDeviations": [],
       "invariantViolations": []
     }
