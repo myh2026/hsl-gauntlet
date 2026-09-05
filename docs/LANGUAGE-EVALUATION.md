@@ -95,3 +95,88 @@ dsh 时代 fixture 只有 acts/reviews 两轨。Vigil 需要 4 轨（inbox/triag
 3. 剧本轨道：把 inbox 这类「环境轨道」与「模型轨道」在文档上分层（Gauntlet 已实践：环境 = workspace 文件 + 环境轨道，模型 = 角色轨道）；
 4. `first()`/`nth()` 等 Vec 便捷方法与 Option 的糖（`unwrap_or` 已很好用）；
 5. 故障注入进 BNF 附录（宿主 ABI 的 fault 命名空间），避免方言化。
+
+---
+
+# 第二轮实测（hsl-fuzz 对抗战役 · 2026-09-05）
+
+> 23 个对抗样本（Parser 7 / Checker 8 / Interp 8）+ 8 个精准追加样本，
+> 每个疑点双编译器对拍 + rustc 真机验证。产出 4 个新修复（L-4/L-5/L-6/L-7）
+> + 2 个设计观察。**全部锁定回归用例：dhv-ts 113→120，双编译器一致性 39→44。**
+
+## 7. 第二轮确认的工具链 bug
+
+### 7.1 [L-4 已修复 → S-13] 整型注解的字面量域完全不设防
+
+`let x: i8 = 300` 的完整行为链（修复前）：
+
+| 环节 | 行为 |
+|---|---|
+| dhv-ts check | 0 error 0 warning（放行） |
+| dhv (Rust) check | 校验通过（放行） |
+| interp run | 打印 `300`（注解完全失效） |
+| emit rust → rustc | **error: literal out of range for `i8`**（拒绝） |
+| emit python/js | 静默放行 |
+
+这是**跨后端语义漂移**的教科书案例：同一份 HSL 源，38 后端的可用性不同，
+且 emit 的启发式校验（"语法✓ heuristic:balanced"）完全没拦住。
+`u8 = -1`（无符号接受负值）同理。
+
+**修复**：S-13 规则——12 种整型注解（i8..i128/isize/u8..u128/usize）的字面量
+域静态校验（let + const，含一元负号展开）。非字面量不判（`big + 1` 的
+BigInt 任意精度是既定设计，见 guide 已知限制 #48；显式截断走 `as`）。
+双端同步实现（checker.ts + typecheck.rs）。
+
+### 7.2 [L-5 已修复] rust 后端 println 双重包裹——所有 println 生成物必炸
+
+`println!("len={}", v.len())` 生成 `println!(format!("len={}", v.len()))`
+—— rustc 对**所有含 println 的 HSL 源**都报 `format argument must be a
+string literal`。emit 校验绿灯掩盖了这一点（启发式不覆盖宏调用形态）。
+python/ts/go 的 print 家族接受任意表达式，所以只有 rust 后端炸——
+**又一个只在单一后端显形的漂移**。修复：剥 `format!(` 外壳取宏内芯。
+
+### 7.3 [L-6 已修复] rust 后端 main 签名违反 Termination 约束
+
+HSL 入口约定 `fn main() -> i64`（R-1）投 rust 生成 `pub fn main() -> i64`
+—— rustc 拒绝（main 只能返回实现 `Termination` 的类型：`() / bool / i32 /
+u8-u32 / ExitCode / Result`）。修复：入口 fn 改名 `hsl_main` + 进程级
+wrapper `fn main() { std::process::exit(hsl_main() as i32); }`。
+修复后 e07 样本 emit rust → rustc 编译零错 → **真机运行输出与 interp 完全
+一致**（`len=3 ok`）—— 38 后端"同一语义"承诺在 rust 端首次全链路成立。
+
+### 7.4 [L-7 已修复 → G-8] 重复边声明静默通过
+
+同一条 `edge a -> b on Ev::Tick;` 复制两遍 → 0 error 0 warning。对
+Gauntlet 是直接威胁：拓扑统计（边数 = 覆盖率分母 = 变异基线）翻倍污染。
+**修复**：G-8 规则——(from, to, 守卫语义指纹) 三元组判重。指纹实现有讲究：
+- dhv-ts 手写递归序列化；dhv (Rust) **不能用 `{:?}`**（Ident 含 span，
+  同语义不同位置的 pattern 指纹必不同——实现时踩过：双端一度不一致，
+  conformance 对拍暴露）；
+- expr 守卫用源码位置指纹（同位置 + 同端点 ≡ 复制粘贴）；
+- 保守口径不误报 Vigil 惯用的「同向多守卫并行边」（如 router->ledger
+  的 Parked/Escalated 两条）。
+
+## 8. 第二轮设计观察（记录，非 bug）
+
+1. **i64 算术溢出不环绕**：`i64::MAX + 1` 打印 `9223372036854775808`
+   （BigInt 直通）。这是任意精度设计（guide #48 已记录 cpp 对拍差异），
+   但与 Rust 语义不同——emit rust 的 `big + 1` 在 release 是环绕。
+   归档为已知语义差异，建议 spec 显式声明。
+2. **静态/运行时类型检查不对称**：`"abc" * 2`、`true + 1`、`"abc" > 1`
+   check 全绿、运行期才干净报错。S1「零隐式转换」在二元运算符层
+   不下沉。字面量常量折叠可静态判——列为 checker 强化候选（未修，
+   留第三轮）。
+3. **带守卫自环是合法拓扑**（Vigil 的 Retryable/EvidencePending 即是），
+   G-3 只拦无条件环——口径正确，但值得在 guide 写明自环语义。
+4. run 缺入口（无 export fn main）→ 干净报错 `入口文件没有 fn main()`
+   ✓（早先疑点被 grep 过滤误导，实测推翻）。
+
+## 9. 第二轮实测的元发现
+
+- **emit 校验的"绿灯"不可信**：启发式 balanced 检查放行 rustc 必炸的
+  生成物（L-5/L-6 都是）——**生成物合法性需要真机编译闭环**，这是
+  Gauntlet"静态声明 vs 运行观测"方法学在工具链自身的镜像。
+- **双编译器对拍是漂移放大器**：S-13 的价值一半来自 rustc 拒绝 +
+  python/js 放行的三方对照。单一实现永远看不到这个面。
+- **指纹类规则必须双端对拍**：G-8 在 dhv 的第一版实现用 Debug 序列化
+  （含 span）→ 静默失效。conformance 套件（44 用例）当场暴露。
