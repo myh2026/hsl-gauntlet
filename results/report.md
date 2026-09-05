@@ -1,6 +1,6 @@
 # Gauntlet Conformance Report — Vigil + Curator (HSL)
 
-> 生成时间：2026-09-05T05:42:57.399Z
+> 生成时间：2026-09-05T05:44:23.301Z
 > SUT：2 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline））
 
 ## 0. 跨 SUT 聚合（泛化实验总览）
@@ -95,7 +95,7 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 96.3%（26/27 killed，57.7s）**
+**Mutation Score: 96.3%（26/27 killed，97.6s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -226,7 +226,7 @@ nodes: 8   edges: 16
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 100.0%（26/26 killed，87.8s）**
+**Mutation Score: 100.0%（26/26 killed，55.4s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
