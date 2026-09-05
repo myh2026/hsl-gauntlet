@@ -1,6 +1,6 @@
 # Gauntlet Conformance Report — Vigil (HSL)
 
-> 生成时间：2026-09-05T02:24:11.588Z
+> 生成时间：2026-09-05T02:58:16.270Z
 
 ## 1. 声明拓扑（ground truth）
 
@@ -81,7 +81,7 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 96.3%（26/27 killed，53.9s）**
+**Mutation Score: 96.3%（26/27 killed，94.2s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
