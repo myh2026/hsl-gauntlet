@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![SUT](https://img.shields.io/badge/SUT-Vigil%20%2B%20Curator%20%2B%20Gatemaster-success.svg)](docs/GENERALIZATION.md)
-[![Toolchain](https://img.shields.io/badge/toolchain-dhv--ts%20v0.2.55-blueviolet.svg)](vendor/dhv-ts)
+[![Toolchain](https://img.shields.io/badge/toolchain-dhv--ts%20v0.2.56-blueviolet.svg)](vendor/dhv-ts)
 [![Scenarios](https://img.shields.io/badge/scenarios-47%20(12%20nominal%20%2B%2035%20fault)-orange.svg)](scenarios)
 [![Edge coverage](https://img.shields.io/badge/edge%20coverage-100%25%20%C3%973%20SUTs-brightgreen.svg)](results/report.md)
 [![Mutation score](https://img.shields.io/badge/mutation%20score-98.8%25%20(raw)%20%C2%B7%20100%25%20(归因后)-yellow.svg)](results/report.md)
