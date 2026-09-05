@@ -340,3 +340,131 @@ Gauntlet「静态声明 vs 运行观测」方法学在数值内核的镜像：�
 - dsh/nova/backends-demo/smoke 零误伤；Vigil 15 模块 0 error；
 - Gauntlet 全流水线不变（15/15 场景、100% 边覆盖、96.3% 变异杀死率）；
 - 已知限制 #66 记录机制与扩展口径（新字面量形态 → 加语料即可）。
+
+# 第六轮实测（字符串/浮点值损坏 + cast 域折叠 · 2026-09-05 · cron 长程任务）
+
+## 14. 第六轮确认的 bug（L-12 / L-13 / L-14）
+
+### L-12：dhv unescape_string 的 `\u{...}` 收集越过 `}` 吞字（值损坏·三重形态）
+
+**证据链**（Rust 单元测试直证根因）：
+
+```rust
+unescape_string(r"\u{41}bc") == "䆼"   // 期望 "Abc" —— hex 吞成 "41bc" → U+41BC
+unescape_string(r"\u{41}x")  == ""      // 整串静默丢失 —— from_str_radix("41x") 失败
+unescape_string(r"\u{41}1")  == "Б"     // hex="411" → U+0411 错值
+unescape_string(r"\u{110000}") == ""    // 码点越域静默空
+```
+
+根因：收集循环 `for c2 in chars.by_ref() { if '{'|'}'=='_' continue; hex.push(c2); ... }`
+**不知道在 `}` 处停止** —— 语法层（pest `escape` 规则）与值层（手写 unescape）
+双重解析不同步：语法正确 ≠ 值正确。
+
+**三重修复**（纵深防御）：
+1. `unescape_string`：遇 `}` break（核心）；无效码点保留 `\u{...}` 原文（不丢内容）
+   而非静默空；
+2. **pest 码点域收紧**（语法层拒绝越域）：1-5 位 hex 任意；6 位时
+   「首位 0 或（首位 1 且第二位 0）」精确表达 ≤ 0x10FFFF ——
+   `\u{110000}`/`\u{999999}` 语法层直接报错，`\u{10FFFF}`/`\u{0FFFFF}` 合法；
+3. ts 端 `\u` 严格化：去除下划线容忍（`\u{_4_1_}` 双端口径统一为拒绝）+ 显式
+   码点上限报错（此前靠 fromCodePoint 的 RangeError 带出）。
+
+### L-13：dhv 带后缀浮点字面量一直静默归零（每条必损坏！）
+
+**值级对拍 float 扩展当场抓获**（第五轮护栏的第一次实战）：
+
+```
+float  1f32  7ff8000000000000  f32    ← dump 出 NaN 位模式
+```
+
+根因：后缀剥离用 `trim_end_matches(is_alphabetic)` —— `f32` 以数字 `2` 结尾，
+**从尾部剥不动** → `parse("1f32")` 必失败 → `unwrap_or(0.0)` 静默归零。
+即：**`1f32`/`2.5f64` 等所有带 f 后缀浮点在 dhv 的值此前一直是 0**，
+check 双端全绿（check 不查值）。L-11 的完美镜像 —— 但这次不是手工发现的，
+是机器护栏抓的：**第五轮的方法论投入在第六轮直接回本**。
+
+修复：精确 `strip_suffix("f32"/"f64")` 剥离；parse 失败改 NaN（位模式可见、
+值级对拍可抓）而非归零（L-10/L-11 教训：静默归零是最劣档）。
+
+### L-14：dhv-ts lexer 把 `1f32` 分派为 int token（kind 漂移）
+
+ts lexer 的 isFloat 判定只看 `.` 后有数字 / `e` 指数 —— 后缀路径
+`1f32` 不触发 → int token + f32 后缀；而 dhv 的 pest `float_literal`
+含 `dec_literal ~ float_suffix` 分支 → Float kind。双端字面量分类漂移
+（值恰好都对、kind 不同 → 值级对拍 float 扩展必失配）。
+
+修复：后缀 f32/f64 ⇒ 一律 float。附带：TokenTree（宏 token 树）此前丢弃
+int 后缀 → 补齐（`format!("{}", 2u8)` 的宏字面量后缀进对拍口径）。
+
+## 15. 第六轮实现：值级对拍三族扩展 + S-17
+
+### 15.1 float：IEEE754 位模式对拍（16 hex）
+
+字符串格式化双端不可比（Rust `"inf"` vs JS `"Infinity"`；大数指数形态
+`"1e21"` vs `"1000000000000000000000"`）—— **位模式是唯一可靠等价判据**：
+`f64::to_bits()`（Rust）/ `Float64Array→BigUint64Array`（JS），NaN payload、
+符号位、下溢全保真。
+
+### 15.2 string：统一转义 repr
+
+`\\ \" \n \r \t \0` + 控制字符 `\xNN`（两位小写 hex）双端同规则；
+raw 列同样转义（防真实 tab 切断 TSV 列）。
+
+### 15.3 宏 token 树口径（本轮对齐实锤）
+
+- 表达式位置宏（let init / match 臂 / 尾表达式）= `Expr::Macro` → dump
+  token 树叶子字面量（int/float/string 三族）；
+- **带分号语句位置宏** = `macro_invocation_semi` → Item 级 → 双端一致不 dump。
+  （ts 端曾把语句宏也当表达式 → 三族扩展后 8 个语料全失配 → 对齐后全绿。）
+
+### 15.4 S-17：cast 域折叠（truncation-aware）
+
+第四轮遗留（`intValOf 不穿 cast`）：
+
+```hsl
+let a: u8 = 300 as u8 + 300;   // 环绕折叠 44+300=344 越域 —— 此前漏报，现报 S-15
+let a: u8 = 300 as u8 + 200;   // 44+200=244 域内 —— 零误报通过
+let b: i8 = 200 as i8 - 300;   // -56-300=-356 越域 —— 报 S-15
+```
+
+cast 到整型域 = 显式截断投射（环绕，与 interp castValue / rust `as` 同构，
+BigInt/i128 精确实现）；cast 到 float/String/bool/char → 离开整数值域不折叠。
+dhv-ts intValOf 与 dhv expr_int_val 双端同构。
+
+### 15.5 语料 8→12 类 + RED 验证
+
+新增：浮点族（1f32/2.5f64/1e10/2.5e-3/0.1/π/下划线）、字符串转义族
+（\n/\t/\\/\0/\x41/引号/中文emoji）、unicode 边界族（`\u{41}bc` L-12 锁/
+`\u{0}`/`\u{10FFFF}`/`\u{0FFFFF}`）、宏口径族（表达式宏 dump vs 语句宏不 dump）。
+
+**RED 注入**（护栏真实性）：移除 `}` break 模拟 L-12 复发 →
+`unicode_edge.hsl` 立即失配（dhv 值变 `\u{41}bc}` 垃圾）→ 恢复后 12/12 GREEN。
+
+## 16. 第六轮元发现（第六课）
+
+1. **「语法正确 ≠ 值正确」**：pest 语法层接受 `\u{41}bc`（escape 规则正确匹配
+   `\u{41}`），但手写 unescape 拿原始文本重扫时越过 `}` —— 双重解析是
+   值损坏的结构温床（L-12 根因）。**每条「语法层校验过的」路径都需要
+   值层的独立对拍**。
+2. **护栏的复利**：第五轮建的值级对拍在第六轮 float 扩展的第一天就抓到
+   L-13（藏了至少五轮的「每条 f 后缀浮点必归零」）—— **对拍基础设施的
+   覆盖面扩展本身就是 bug 发现引擎**（扩展到哪个族，哪个族的陈年损坏
+   就会浮出水面）。
+3. **kind 漂移是值级对拍的隐藏前提**：L-14（`1f32` int vs float kind）说明
+   字面量分类必须在双端一致，否则「值一致」无从谈起 —— 对拍口径
+   （kind + value + suffix）三件套缺一不可。
+4. **cargo test 的 debug 栈限制**：`error_fixtures_must_fail_with_expected_code`
+   深嵌套 fixture 在 debug profile 8MB 栈下溢出（SIGABRT）——
+   `RUST_MIN_STACK=33554432` 下正常。CI/脚本需带环境变量（已记入 worklog）。
+
+## 17. 第六轮回归（全部零误伤 + 修复锁定）
+
+- run-all 137→**145 全绿**（+8：L-12×3 / L-13 / L-14 / S-17×3）；
+- conformance 57→**61 全一致**（+2 check：S17 合法族 / L12 unicode 合法族；
+  +2 errors：S17 越域 / L12 越域）；
+- 值级对拍 **12 文件三族全一致**（含 4 新语料）；
+- cargo test：lib 5→**9**（L-12 回归组 4 用例）+ conformance 5/5；
+- dsh（10 模块）/ nova / backends-demo 双端零误伤；
+- Vigil 15 模块 0 error 0 warning；Gauntlet 全流水线不变
+  （15/15 场景、100% 边覆盖、96.3% 变异杀死率）；
+- 已知限制 #67（三族值级对拍 + L-12/L-13/L-14 全记录）/ #68（S-17）入 HSL-GUIDE。
