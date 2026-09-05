@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-05T06:07:27.132Z",
+  "ts": "2026-09-05T06:15:32.688Z",
   "subjects": [
     {
       "subject": {
@@ -554,7 +554,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 126,
+          "elapsedMs": 144,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -583,7 +583,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 116,
+          "elapsedMs": 125,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -638,7 +638,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 138,
+          "elapsedMs": 116,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -653,7 +653,7 @@
           "edgeSet": [],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 112,
+          "elapsedMs": 105,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -713,7 +713,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 117,
+          "elapsedMs": 125,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -761,7 +761,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 110,
+          "elapsedMs": 121,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -800,7 +800,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 121,
+          "elapsedMs": 130,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -839,7 +839,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 0,
-          "elapsedMs": 116,
+          "elapsedMs": 117,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -878,7 +878,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 1,
-          "elapsedMs": 129,
+          "elapsedMs": 112,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -921,7 +921,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 114,
+          "elapsedMs": 117,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -972,7 +972,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 124,
+          "elapsedMs": 120,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1022,7 +1022,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 125,
+          "elapsedMs": 134,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1075,7 +1075,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 135,
+          "elapsedMs": 125,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1121,7 +1121,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 117,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -1172,7 +1172,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 137,
           "conformanceDeviations": [],
           "invariantViolations": []
         }
@@ -3280,7 +3280,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 139,
+          "elapsedMs": 384,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3324,7 +3324,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 130,
+          "elapsedMs": 305,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3367,7 +3367,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 122,
+          "elapsedMs": 281,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3382,7 +3382,7 @@
           "edgeSet": [],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 107,
+          "elapsedMs": 220,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3423,7 +3423,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 128,
+          "elapsedMs": 289,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3464,7 +3464,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 114,
+          "elapsedMs": 237,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3496,7 +3496,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 134,
+          "elapsedMs": 436,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3528,7 +3528,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 220,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3560,7 +3560,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 1,
-          "elapsedMs": 112,
+          "elapsedMs": 187,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3603,7 +3603,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 123,
+          "elapsedMs": 270,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3646,7 +3646,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 139,
+          "elapsedMs": 253,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3681,7 +3681,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 120,
+          "elapsedMs": 352,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3723,7 +3723,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 324,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3764,7 +3764,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 123,
+          "elapsedMs": 288,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -3802,7 +3802,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 135,
+          "elapsedMs": 380,
           "conformanceDeviations": [],
           "invariantViolations": []
         }
@@ -5959,7 +5959,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 218,
+          "elapsedMs": 391,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6009,7 +6009,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 121,
+          "elapsedMs": 398,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6053,7 +6053,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 131,
+          "elapsedMs": 301,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6068,7 +6068,7 @@
           "edgeSet": [],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 130,
+          "elapsedMs": 263,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6109,7 +6109,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 123,
+          "elapsedMs": 336,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6146,7 +6146,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 117,
+          "elapsedMs": 215,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6181,7 +6181,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 124,
+          "elapsedMs": 298,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6219,7 +6219,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 140,
+          "elapsedMs": 276,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6272,7 +6272,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 124,
+          "elapsedMs": 220,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6325,7 +6325,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 125,
+          "elapsedMs": 205,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6378,7 +6378,7 @@
           ],
           "faultEvents": 1,
           "deniedEvents": 1,
-          "elapsedMs": 159,
+          "elapsedMs": 291,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6428,7 +6428,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 119,
+          "elapsedMs": 296,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6467,7 +6467,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 131,
+          "elapsedMs": 216,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6508,7 +6508,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 139,
+          "elapsedMs": 301,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6544,7 +6544,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 120,
+          "elapsedMs": 249,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6582,7 +6582,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 121,
+          "elapsedMs": 342,
           "conformanceDeviations": [],
           "invariantViolations": []
         },
@@ -6623,7 +6623,7 @@
           ],
           "faultEvents": 0,
           "deniedEvents": 0,
-          "elapsedMs": 142,
+          "elapsedMs": 219,
           "conformanceDeviations": [],
           "invariantViolations": []
         }
