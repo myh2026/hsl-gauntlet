@@ -658,3 +658,115 @@ RED 注入在「双 SUT 管线」上转红时，暴露 `all` 模式自初版就�
 都走了 runner 异常路径而没踩中。**教训：每新增一个判定出口（新 CLI 模式、
 新聚合层、新管线组合），都要重新做 RED 注入** —— 护栏的可靠性不是护栏
 的属性，是「护栏 × 出口矩阵」的属性。
+
+---
+
+# 第九轮实测（#L-22 上游修复 + 等价变异静态判定器 · 2026-09-05 · cron 长程任务）
+
+> 本轮把第八轮的两个「登记未修」一次清账：(a) #L-22 native 值模型断层的
+> 上游修复（$host.make 构造通道 + S-18 双端预警）；(b) M6-CRITIC 手工
+> 等价归因固化为 triage 静态判定器（PAPER §5.3 / 路线图 #3 落地）。
+
+## 26. #L-22 修复：$host.make 构造通道（native 的值模型闭合）
+
+**断层回顾**：native 块返回的 plain object 不带运行时 `__struct` 标记 →
+类型名 `foreign` → 字段读取走「foreign 直通」可用，但 `.clone()`/方法
+派发/match 模式匹配全失效（Curator 首版实录运行期 panic）。此前唯一出路
+是 N1 纪律的值模型版本：native 只拍平字符串（`"kind~value~conf|…"`），
+HSL 侧 split_once 逐字段重建 —— Curator 为此付出 ~40 行协议代码 + 值不
+得含 `~`/`|` 的协议保留字约束。
+
+**修复形态**（interp.linkProgram 在类型注册表就绪后幂等注入 hostApi）：
+
+```hsl
+let es: Vec<Entity> = native typescript {
+    const raw = $host.json.parse(payload);
+    return raw.entities.map((e) =>
+        $host.make("Entity", { kind: e.kind, value: e.value, confidence: e.confidence }));
+};
+let e0 = es[0].clone();   // ← 此前 panic 位，现在合法
+```
+
+- 结构体：字段完备性/多余性校验（与结构体字面量同规则），缺字段/未知
+  类型/多余字段全部可观测报错（不静默）
+- 命名字段变体：`$host.make("ExtractEvent::EntitiesExtracted", { entities })`
+- 元组变体：数组 payload 按位（`$host.make("Carrier::Boxed", [8, 9])`）
+- 单元变体：无 payload（`$host.make("Status::Ok")`）
+- prelude 族：`Result::Ok/Err`、`Option::Some/None` 显式镜像（不入
+  enums 注册表的内建构造器通道 —— $host.make 需同款值形态）
+
+**SUT 侧收益实证**：Curator `parse_extract.hsl` 以 $host.make 重写（嵌套
+构造 `Result::Ok[ExtractEvent::EntitiesExtracted{entities}]` 全族直构），
+拍平协议与重建定式全删 —— **15/15 场景黄金输出逐字节等价**（行为不变、
+代码 -40 行、协议保留字约束消失）。这就是第八轮预言的「上游登记 → 第
+九轮修复」闭环。
+
+## 27. S-18：native 值模型断层预警（双端同口径）
+
+静态可判定的断层现场是**同现场 let**：`let <含 struct/enum 族名的注解> =
+native <...>` 且 native 体无 `$host.make` → 警告（foreign 值：字段直通
+可用，clone/方法/模式派发失效）。
+
+- 只判 let 注解 + 初始化器同现场（fn 返回值经变量中转不判 —— S-14 v3
+  的字面量追踪不覆盖运行期值标记，诚实边界）
+- String/数值注解的合法拍平协议零触发（Curator write_artifacts 的
+  `let x: String = native` 不告警）
+- **双端实现踩坑实录**：dhv 端 `structs` 注册表首版只挂在
+  `harvest_module`（依赖闭包，**不含根文件**）→ 根文件 struct 查无此名
+  静默失效 —— 根因与第四轮 S-14 的 set_lit_ty 顺序坑同构：**收集点的
+  覆盖域必须与检查域一致**（修复：collect_item 补 Item::Struct 注册）
+- **conformance 第 6 段「预警对等」**：退出码对拍看不见警告是否产出
+  （警告不改变结论）—— 本段直接比对双端 S-18 出现性：warn fixture 双端
+  必须告警、legal fixture（$host.make 在体）双端必须零告警。dhv 渲染
+  `S-S18` / dhv-ts 渲染 `S-18`，各 grep 各的形态（文件名含 S18 的
+  假阳性排查实录：`rg -c "S18"` 把「校验通过: …/S18_xxx.hsl」也计入）。
+
+## 28. 等价变异静态判定器（triage.ts —— 第八轮手工归因的机器化）
+
+PAPER §5.3 的手工归因（M6-CRITIC 存活 = 探查计划门结构使阈值边界不可达）
+本轮固化为 `gauntlet/triage.ts`：**构造位门分析**（constructor-site gate
+analysis）识别「计划门不变式」模式：
+
+证据链六步（每步失败即降级 needs-test，宁可沉默不可谎报）：
+1. 变异点 = 同计数器阈值松动（find/replace 谓词差分 —— 复合谓词中排在
+   前面的未变谓词会遮蔽真实变异点，covering 负控实录）
+2. 计数器 = F 对参数按 kind 字段的循环计数（增量必须位于 kind 分支直接
+   体内且路径上无嵌套 for —— 否则嵌套循环计数被误绑，**covering 负控
+   实录：v1 松散匹配把 covering += 1（keywords 内层循环）绑到 metrics
+   计数 → 误报等价，收紧后正确拒绝**）
+3. F 全部调用点位于 match 臂 `Variant{...} =>` 之内（调用被变体门控）
+4. Variant 构造位位于计数链 if/else-if 中（`count_kind(绑定名) == i`
+   双形态识别 —— 首版只匹配内联调用，M6-CRITIC 实录立即踩空：链条件
+   是 `metrics_count == 0` 而 count_kind 在 let 行）
+5. 该 kind 块 push 位全局恰 N 处且均在计数链分支内（上界收紧）
+6. 调用侧累计向量 Vec::new() 空初始化（起点闭合）
+
+⇒ 不变式：F 每次求值恒有 count == N；判定 truth(N >= K) === truth(N >= K')。
+
+**实测**：M6-CRITIC 自动归因 `equivalent-by-plan-gate`（六步证据链完整，
+报告含文件:行级证据）—— **等价归因后有效杀死率 100.0%（原始 96.3% +
+结构等价校正 +3.7%）**。负控实验（判定器可靠性）：
+- `covering >= 1 → >= 0`（计数真实可变）→ needs-test ✓（不谎报）
+- 未门控阈值 / 乘法上限（`max_drift * 2 → * 1`）→ unknown-pattern ✓
+- `metrics_total >= 2 → >= 0` → equivalent ✓（count==2 下同真，数学正确）
+
+**诚实边界**：判定器 v1 只认识计划门不变式一种模式；Curator（100% 杀死
+率）无存活体可归因。第三模式（如 fan-in 汇聚计数）为后续扩展位。
+
+## 29. 第九轮框架层与回归
+
+- 上游：dhv-ts 测试 149→158（+9：$host.make 五形态 + S-18 触发/零误报）；
+  conformance 62→66（+2 fixtures + S-18 预警对等 ×2）；dhv cargo 15/15；
+  dsh/nova/backends-demo 零误伤；Vigil 0 error 0 warning
+- Gauntlet：双 SUT 全流水线不变（30/30 场景 · 100%+100% 边覆盖 ·
+  53 变异体 98.1%）；report.md 新增「结构性等价变异」分节（证据链渲染）
+- Curator 简化（$host.make 直构版）黄金等价 = 泛化文档新增 delta 项
+
+## 30. 第九轮元发现（第九课：判定器本身也要负控）
+
+triage v1 的两次翻车都在负控实验里当场暴露：谓词差分缺失（复合谓词遮蔽
+真变异点）→ 误报「covering 等价」；计数形态松散（嵌套 for 计数误绑
+kind）→ 同样误报。**教训：任何「自动判等价」的判定器，其误报风险与
+等价声明本身同级 —— 判定器交付必须携带负控样本集（真实可变计数 /
+未门控谓词 / 模式外形态），且负控优先于正控写进用例**。这与第八课
+（判据出口也是被测对象）同构：归因结论也是一种判据出口。

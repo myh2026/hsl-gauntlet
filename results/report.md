@@ -1,6 +1,6 @@
 # Gauntlet Conformance Report — Vigil + Curator (HSL)
 
-> 生成时间：2026-09-05T04:58:32.621Z
+> 生成时间：2026-09-05T05:33:08.118Z
 > SUT：2 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline））
 
 ## 0. 跨 SUT 聚合（泛化实验总览）
@@ -95,7 +95,7 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 96.3%（26/27 killed，56.9s）**
+**Mutation Score: 96.3%（26/27 killed，59.0s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -127,8 +127,16 @@ nodes: 9   edges: 17
 | M7-DRIFT | M7 DRIFT_CAP | 漂移硬上限提升（*2 -> *3） | ☠ killed | f2 |
 | M8-COMMIT | M8 COMMIT_DROP | 提交路径丢弃案例落盘（cases.push 删除） | ☠ killed | n1, n3, f1, f7, f9, f10, f11 |
 
-**存活变异体（1）——测试套件盲区，需补场景：**
-- M6-CRITIC M6 CRITIC_THRESH: 审查闸门阈值松动（metrics_total >= 2 -> >= 1）
+**结构性等价变异（1）—— triage 静态归因成立，非套件盲区（无需补场景）：**
+- ◇ M6-CRITIC M6 CRITIC_THRESH: 审查闸门阈值松动（metrics_total >= 2 -> >= 1）
+  - 归因：计划门不变式成立：fn assess 的每次求值恒有 metrics_total == 2（构造位计数链 + 全局 push 位上界 + 空起点闭合）。truth(2 >= 2) === truth(2 >= 1) === true —— 变异体在可达状态空间内与原程序不可区分（SUT 结构性等价变异，非套件盲区，无需补场景）。
+    - (1) 变异点位于 agents/critic.hsl:41（fn assess），谓词 metrics_total >= 2 松动为 >= 1
+    - (2) metrics_total = 对参数 evidence 按 kind=="metrics" 的循环计数（agents/critic.hsl:26 fn assess 体内）
+    - (3) fn assess 全部调用点位于 match 臂 Probe::EvidenceReady 之内（vigil.hsl:190）—— 调用被变体构造门控
+    - (4) agents/investigator.hsl:81 构造 Probe::EvidenceReady（fn probe_once 内）；链上 metrics 计数条件 ==0/==1（均为假分支）→ 构造时刻 count(metrics) ≥ 2
+    - (5) "metrics" 块 push 位全局恰 2 处且均位于计数链分支内（agents/investigator.hsl:41、agents/investigator.hsl:59）—— 每次链推进至多补 1 块 ⇒ count 上界 = push 位数
+    - (6) 调用侧累计向量以 Vec::new() 空初始化 —— 计数起点 = 0
+- 等价归因后有效杀死率：100.0%（原始 96.3%，结构等价校正 +3.7%）
 
 ## 6. 结论摘要
 
@@ -218,7 +226,7 @@ nodes: 8   edges: 16
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 100.0%（26/26 killed，54.3s）**
+**Mutation Score: 100.0%（26/26 killed，51.2s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|

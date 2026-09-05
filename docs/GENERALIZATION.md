@@ -74,7 +74,7 @@
 | Edge coverage | **100%**（17/17） | **100%**（16/16） | — |
 | fault-only 边 | 6 条（35%） | **8 条（50%）** | — |
 | 变异杀死率 | 96.3%（26/27） | **100%（26/26）** | 52/53 = 98.1% |
-| 存活体归因 | M6-CRITIC：SUT 结构性等价变异（探查计划门保证 critic 恒见 metrics_total==2） | 无 | 1 |
+| 存活体归因 | M6-CRITIC：**triage 静态判定器自动归因**（计划门不变式证据链六步，等价归因后有效杀死率 100%） | 无 | 1 |
 
 ### 3.1 值得注意的域差异（论文观察）
 
@@ -87,6 +87,22 @@
 双 SUT 管线在受控破坏下正确转红：将 Curator 的 published 处置改写为 quarantined 后，
 `run-all.sh` 退出码 1，8 个场景的 conformance 偏差 + 4 条不变式违反（CINV-7/CINV-8）被逐条报告；
 恢复后退出码 0。判定链：`run-all.sh (set -e) ← cli.ts all 判据（偏差/不变式/无效变异体） ← watchdog GREEN`。
+
+
+### 3.3 第九轮更新：#L-22 修复后的 Curator 简化（上游反哺 SUT）
+
+Curator 的 `parse_extract.hsl` 以 `$host.make` 直构通道重写（`Result::Ok[ExtractEvent::EntitiesExtracted{entities}]` 全族嵌套构造），
+原「拍平字符串 + split_once 逐字段重建」协议全删：
+
+| 项 | 拍平协议版（#L-22 断层期） | $host.make 直构版（第九轮） |
+|:---|:---|:---|
+| parse_extract 代码量 | ~75 行（含 40 行协议 + 重建定式） | ~35 行 |
+| 协议保留字约束 | entity value 不得含 `~` 与 `|` | 无 |
+| 错误通道 | 哨兵对 `["__parse_error", msg]` | `Result::Err(HarnessError{...})` 原生嵌套 |
+| 黄金输出 | — | **逐字节等价**（15/15 场景 0 偏差 0 不变式违反） |
+
+这是「SUT 泛化实验反哺语言修复」的完整闭环：Curator 接入时踩到的 #L-22（第八轮登记）
+在第九轮修复，修复的价值直接用 SUT 的行为等价 + 代码缩减度量。
 
 ---
 

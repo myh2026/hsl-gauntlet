@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![SUT](https://img.shields.io/badge/SUT-Vigil%20%2B%20Curator-success.svg)](docs/GENERALIZATION.md)
-[![Toolchain](https://img.shields.io/badge/toolchain-dhv--ts%20v0.2.52-blue.svg)](vendor/dhv-ts)
+[![Toolchain](https://img.shields.io/badge/toolchain-dhv--ts%20v0.2.56-blue.svg)](vendor/dhv-ts)
 [![Scenarios](https://img.shields.io/badge/scenarios-30%20(8%20nominal%20%2B%2022%20fault)-orange.svg)](scenarios)
 
 </div>
@@ -23,7 +23,7 @@
 | **Fault-only 边** | 6 条（**35%**） | 8 条（**50%**） | nominal 套件结构性盲区——故障注入不是可选项，是覆盖的必要条件；失败面更宽的域盲区更大 |
 | **场景一致性** | 15/15 全绿 | 15/15 全绿 | exit/verdict/disposition/故障事件数五维黄金断言，确定性零外联 |
 | **轨迹不变式** | 11/11 满足 | 11/11 满足 | Accepted→Committed 时序 / fan-in 收敛守恒 / 故障下不 panic… |
-| **变异杀死率** | 96.3%（26/27） | **100%（26/26）** | 聚合 52/53 = **98.1%**；Vigil 唯一存活体 = SUT 结构性等价变异（静态归因） |
+| **变异杀死率** | 96.3%（26/27）→ **等价归因后 100%** | **100%（26/26）** | 聚合 52/53 = 98.1%；Vigil 唯一存活体经 **triage 静态判定器自动归因**为 SUT 结构性等价变异（计划门不变式证据链，[triage.ts](gauntlet/triage.ts)） |
 | **框架 SUT 专属代码** | — | — | **0 行**（第二 SUT 接入零框架改动，见 [GENERALIZATION.md](docs/GENERALIZATION.md)） |
 | **G-7 lint 交叉验证** | dsh 的 `executor->model on Observed` 边被静态抓出（真实运行从未发射） | 同 lint 双 SUT 全过 | 立项动机被工具实证 |
 
@@ -122,6 +122,7 @@ cat /tmp/vigil-demo/events.jsonl  # 事件总线（edge/node/fault_injected）
 | **Host Fixture v2** | `$host.fixture.next(track)` 多轨道剧本 + 故障注入宿主闸门（向后兼容，dsh 回归绿） |
 | **L-1/L-2 别名修复** | `import { T as A }` 的构造位/模式位/检查位三通道解析一致（+2 回归用例，113/113 绿） |
 | **G-7/G-8 提案** | 拓扑可观测性纪律（lint 已实证 dsh 的结构性盲区边） |
+| **S-13~S-18 / L-4~L-22** | 九轮语言实测战役：字面量域/溢出/重复边/cast 折叠/值损坏三连/emit 行为级七连修/native 值模型断层（`$host.make` 构造通道 + 预警）；上游测试 111→158，双编译器一致 39→66（含值级/行为级/预警对等四层） |
 
 ## 许可
 

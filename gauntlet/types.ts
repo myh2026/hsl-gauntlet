@@ -94,6 +94,12 @@ export interface MutantResult {
   /** 杀死该变异体的场景 id 与偏差描述 */
   killedBy: { scenario: string; deviations: string[] }[];
   error?: string;
+  /** 变异点定位（triage 静态归因用） */
+  file?: string;
+  find?: string;
+  replace?: string;
+  /** 存活体静态归因（仅存活体携带） */
+  triage?: import('./triage').TriageVerdict;
 }
 
 export interface CoverageReport {

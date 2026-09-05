@@ -19,6 +19,7 @@ import { conformanceDeviations, runScenario } from './runner';
 import { computeCoverage, renderCoverage } from './coverage';
 import { checkInvariants } from './invariants';
 import { runMutationTesting } from './mutate';
+import type { MutantResult } from './types';
 import { renderInvariantCatalog, writeReports } from './report';
 import { SUBJECTS, subjectById, type SubjectSpec } from './subject';
 import type { SubjectReport } from './report';
@@ -72,9 +73,17 @@ async function runSubjectPipeline(subject: SubjectSpec, mode: 'run' | 'all' | 'm
     console.log(`[gauntlet:${subject.id}] 变异测试开始（基线 + ${subject.mutants().length} 变异体 × ${specs.length} 场景，池深 4）…`);
     mutation = await runMutationTesting(subject, path.join(outRoot, subject.id), (m) => console.log(`  ${m}`)) as typeof mutation;
     console.log(`[gauntlet:${subject.id}] 变异杀死率：${(mutation.score * 100).toFixed(1)}%（${mutation.killed}/${mutation.total}，${(mutation.elapsedMs / 1000).toFixed(1)}s）`);
+    const equiv = (mutation.survivors as MutantResult[]).filter((s) => s.triage?.verdict === 'equivalent-by-plan-gate');
+    const blind = (mutation.survivors as MutantResult[]).filter((s) => !s.triage || s.triage.verdict !== 'equivalent-by-plan-gate');
     if (mutation.survivors.length > 0) {
-      console.log('  存活变异体（测试盲区）：');
-      for (const s of mutation.survivors) console.log(`    - ${s.id} ${s.operator}: ${s.description}`);
+      const adj = mutation.score * 100;
+      const adjScore = ((mutation.killed + equiv.length) / mutation.total) * 100;
+      console.log(`  存活变异体（${mutation.survivors.length}）：`);
+      for (const s of equiv) console.log(`    ◇ ${s.id} ${s.operator}: ${s.description} —— 【结构性等价】${s.triage!.rationale.split('。')[1] ?? ''}`);
+      for (const s of blind) console.log(`    - ${s.id} ${s.operator}: ${s.description}${s.triage ? ` —— 归因：${s.triage.rationale.split('。')[0]}` : ''}`);
+      if (equiv.length > 0) {
+        console.log(`  等价归因后有效杀死率：${adjScore.toFixed(1)}%（原始 ${adj.toFixed(1)}% + 结构等价校正 +${((equiv.length / mutation.total) * 100).toFixed(1)}%）`);
+      }
     }
   }
   return { subject, topo, lints, specs, outcomes, coverage, mutation };

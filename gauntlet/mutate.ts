@@ -22,6 +22,7 @@ import * as path from 'node:path';
 import type { MutantResult, MutantSpec, RunOutcome, ScenarioSpec } from './types';
 import { conformanceDeviations, runScenario } from './runner';
 import { checkInvariants } from './invariants';
+import { triageSurvivors } from './triage';
 import type { SubjectSpec } from './subject';
 
 /** 观测向量的差分签名（与基线不同 = 行为/拓扑变化） */
@@ -141,7 +142,19 @@ export async function runMutationTesting(
         killedBy.push({ scenario: spec.id, deviations: ['differential: topological/behavioral signature changed'] });
       }
     }
-    results.push({ id: m.id, operator: m.operator, description: m.description, killed: killedBy.length > 0, killedBy, error: runError });
+    results.push({ id: m.id, operator: m.operator, description: m.description, killed: killedBy.length > 0, killedBy, error: runError, file: m.file, find: m.find, replace: m.replace });
+  }
+
+  // ---- 存活体静态归因（第九轮：triage 等价判定器）----
+  // 结构性等价变异（如 M6-CRITIC）不是套件盲区 —— 归因链把存活报告从
+  // 「需要更多测试」细化为「套件盲区 vs 结构不可达」二分类。
+  const survivors = results.filter((r) => !r.killed);
+  if (survivors.length > 0) {
+    const verdicts = triageSurvivors(subjectDir, survivors);
+    for (const v of verdicts) {
+      const hit = survivors.find((r) => r.id === v.mutantId);
+      if (hit) hit.triage = v;
+    }
   }
 
   const killed = results.filter((r) => r.killed).length;

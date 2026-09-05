@@ -144,8 +144,28 @@ export function renderReport(input: GauntletReportInput): string {
     }
     if (mutation.survivors.length > 0) {
       out.push('');
-      out.push(`**存活变异体（${mutation.survivors.length}）——测试套件盲区，需补场景：**`);
-      for (const sv of mutation.survivors) out.push(`- ${sv.id} ${sv.operator}: ${sv.description}`);
+      const survivors = mutation.survivors as MutantResult[];
+      const equiv = survivors.filter((s) => s.triage?.verdict === 'equivalent-by-plan-gate');
+      const blind = survivors.filter((s) => !s.triage || s.triage.verdict !== 'equivalent-by-plan-gate');
+      if (equiv.length > 0) {
+        out.push(`**结构性等价变异（${equiv.length}）—— triage 静态归因成立，非套件盲区（无需补场景）：**`);
+        for (const sv of equiv) {
+          out.push(`- ◇ ${sv.id} ${sv.operator}: ${sv.description}`);
+          const t = sv.triage!;
+          out.push(`  - 归因：${t.rationale}`);
+          for (const e of t.evidence) out.push(`    - ${e}`);
+        }
+        const adjScore = ((mutation.killed + equiv.length) / mutation.total) * 100;
+        out.push(`- 等价归因后有效杀死率：${adjScore.toFixed(1)}%（原始 ${(mutation.score * 100).toFixed(1)}%，结构等价校正 +${((equiv.length / mutation.total) * 100).toFixed(1)}%）`);
+      }
+      if (blind.length > 0) {
+        out.push('');
+        out.push(`**存活变异体（${blind.length}）——测试套件盲区，需补场景：**`);
+        for (const sv of blind) {
+          out.push(`- ${sv.id} ${sv.operator}: ${sv.description}`);
+          if (sv.triage) out.push(`  - triage 归因：${sv.triage.rationale}`);
+        }
+      }
     }
     out.push('');
 
