@@ -1,7 +1,7 @@
 {
   "name": "hsl-gauntlet",
   "version": "1.0.0",
-  "description": "Topology-grounded conformance testing, fault injection & mutation analysis for HSL agent harnesses — SUT: Vigil",
+  "description": "Topology-grounded conformance testing, fault injection & mutation analysis for HSL agent harnesses — SUT: Vigil + Curator + Gatemaster (three structural signatures)",
   "license": "MIT",
   "scripts": {
     "check": "bun vendor/dhv-ts/src/main.ts check subject/vigil/vigil.hsl",
