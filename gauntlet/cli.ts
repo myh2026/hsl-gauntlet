@@ -5,7 +5,7 @@
 // 用法：
 //   bun gauntlet/cli.ts subjects              列出已注册 SUT
 //   bun gauntlet/cli.ts topo [--subject ID]   打印静态拓扑
-//   bun gauntlet/cli.ts lint [--subject ID]   G-7/G-8 拓扑级 lint
+//   bun gauntlet/cli.ts lint [--subject ID]   G-7/G-8/G-9 拓扑级 lint
 //   bun gauntlet/cli.ts invariants [--subject ID]  不变式目录
 //   bun gauntlet/cli.ts run [--subject ID]    场景一致性 + 不变式 + 覆盖率
 //   bun gauntlet/cli.ts mutate [--subject ID] 变异测试（含基线）
@@ -39,7 +39,7 @@ async function runSubjectPipeline(subject: SubjectSpec, mode: 'run' | 'all' | 'm
   console.log(`[gauntlet:${subject.id}] 拓扑提取：${topo.map((g) => `${g.name}(${g.nodes.length}n/${g.edges.length}e)`).join(', ')}`);
 
   const lints = lintTopology(subject.entry, topo);
-  console.log(`[gauntlet:${subject.id}] lint G-7/G-8：${lints.length === 0 ? '通过' : lints.length + ' 项诊断'}`);
+  console.log(`[gauntlet:${subject.id}] lint G-7/G-8/G-9：${lints.length === 0 ? '通过' : lints.length + ' 项诊断'}`);
 
   const specs = subject.scenarios();
   const outcomes = [];
@@ -108,7 +108,7 @@ async function main(): Promise<number> {
       const topo = extractTopo(subject.entry);
       const diags = lintTopology(subject.entry, topo);
       if (diags.length === 0) {
-        console.log('✓ G-7 可观测性 / G-8 唯一守卫：全部通过');
+        console.log('✓ G-7 可观测性 / G-8 唯一守卫 / G-9 无空臂发射：全部通过');
       } else {
         for (const d of diags) console.log(`${d.rule} ${d.severity}: ${d.message}`);
         if (diags.some((d) => d.severity === 'error')) bad++;

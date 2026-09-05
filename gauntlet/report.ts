@@ -81,10 +81,10 @@ export function renderReport(input: GauntletReportInput): string {
     out.push('');
 
     // 2. Lint
-    out.push('## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）');
+    out.push('## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫 / G-9 无空臂发射）');
     out.push('');
     if (lints.length === 0) {
-      out.push(`全部通过 —— ${topo[0]?.edges.length ?? 0} 条边守卫均可观测且唯一。`);
+      out.push(`全部通过 —— ${topo[0]?.edges.length ?? 0} 条边守卫均可观测、唯一且无空臂发射（#L-23）。`);
     } else {
       for (const l of lints) out.push(`- **${l.rule}** ${l.severity}: ${l.message}`);
     }

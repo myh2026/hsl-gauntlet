@@ -1,6 +1,6 @@
 # Gauntlet Conformance Report — Vigil + Curator + Gatemaster (HSL)
 
-> 生成时间：2026-09-05T06:15:32.687Z
+> 生成时间：2026-09-05T06:35:21.259Z
 > SUT：3 个（Vigil · SRE 告警分诊（incident triage）；Curator · 文档策展管线（document curation pipeline）；Gatemaster · CI 失败分诊（CI failure triage））
 
 ## 0. 跨 SUT 聚合（泛化实验总览）
@@ -40,9 +40,9 @@ nodes: 9   edges: 17
   ledger -> intake on Committed
 ```
 
-## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）
+## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫 / G-9 无空臂发射）
 
-全部通过 —— 17 条边守卫均可观测且唯一。
+全部通过 —— 17 条边守卫均可观测、唯一且无空臂发射（#L-23）。
 
 ## 3. 场景一致性（nominal + fault）
 
@@ -96,7 +96,7 @@ nodes: 9   edges: 17
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 96.3%（26/27 killed，64.7s）**
+**Mutation Score: 96.3%（26/27 killed，113.4s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -172,9 +172,9 @@ nodes: 8   edges: 16
   budget -> extractor on DriftAlarm
 ```
 
-## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）
+## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫 / G-9 无空臂发射）
 
-全部通过 —— 16 条边守卫均可观测且唯一。
+全部通过 —— 16 条边守卫均可观测、唯一且无空臂发射（#L-23）。
 
 ## 3. 场景一致性（nominal + fault）
 
@@ -227,7 +227,7 @@ nodes: 8   edges: 16
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 100.0%（26/26 killed，71.3s）**
+**Mutation Score: 100.0%（26/26 killed，55.4s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|
@@ -294,9 +294,9 @@ nodes: 8   edges: 19
   ledger -> intake on CaseDispatched
 ```
 
-## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫）
+## 2. 拓扑级 Lint（G-7 可观测性 / G-8 唯一守卫 / G-9 无空臂发射）
 
-全部通过 —— 19 条边守卫均可观测且唯一。
+全部通过 —— 19 条边守卫均可观测、唯一且无空臂发射（#L-23）。
 
 ## 3. 场景一致性（nominal + fault）
 
@@ -354,7 +354,7 @@ nodes: 8   edges: 19
 
 ## 5. 变异测试（harness mutation operators）
 
-**Mutation Score: 100.0%（29/29 killed，87.5s）**
+**Mutation Score: 100.0%（29/29 killed，68.3s）**
 
 | 变异体 | 算子 | 描述 | 结果 | 杀手场景 |
 |:---|:---|:---|:---|:---|

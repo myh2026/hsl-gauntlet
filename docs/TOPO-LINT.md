@@ -49,3 +49,56 @@ const topo = extractTopo('<abs>/harness-specification-language/toolchain/example
 for (const d of lintTopology('<abs>/.../dsh.hsl', topo)) console.log(d.rule, d.message);
 EOF
 ```
+
+---
+
+## G-9 空臂发射纪律（empty-arm emission，第十轮 #L-23 工具化）
+
+**规则**：挂边守卫变体的 match 臂若体为空（无语句 block / unit），且该臂在
+scrutinee 的静态可达变体集内，则报 error；可达集不可判定时报 warning（保守提示）。
+
+**动机（Gatemaster gf9 实证，#L-23）**：HSL 的边事件（`interp.traceEdgeFire`）
+语义是「match 臂执行记录」而非「节点转移记录」——穷尽 match 的空臂照样发射
+其声明边事件。Gatemaster 黄金校准期实录：修复环顶部的
+`BudgetSignal::DeadlineAlarm => {}` 空臂在案中死线路径执行，发射了
+`budget -> ledger on DeadlineAlarm` 边事件但没有任何转移动作 → 计数型守恒
+不变式 GINV-9 立即翻车（`abandoned(1) != LadderExhausted+DeadlineAlarm edges(2)`）。
+
+三个直接推论（对上层度量）：
+1. 边覆盖度量的是「守卫可观测性」，不证明「转移语义真发生」；
+2. 计数型守恒不变式必须按臂执行计数（含空臂）；
+3. 空臂发射可反向利用：把「案中死线」从空臂改造为有语义动作臂后，发射与
+   语义重新对齐（Gatemaster 修复实录）。
+
+**实现口径（scrutinee 定向 —— 避免穷尽性填充误报）**：HSL 要求穷尽 match，
+「构造单变体 + 穷尽匹配」是发射边事件的标准习语（如 Curator 的
+`let abandoned = ExtractEvent::ExtractAbandoned{..}; match abandoned {...}`
+——其余两臂是结构性不可达的穷尽性填充）。直接「空臂 + 挂边守卫 → 报」
+会把全部填充臂误报。故 G-9 先解析 scrutinee 的静态可达变体集：
+
+| scrutinee 形态 | 解析策略 |
+|:---|:---|
+| 构造器直绑（`match abandoned`，let 绑定 = 变体构造） | 可达集 = {该变体} |
+| 方法调用（`match budget.clone().status(..)`） | 可达集 = 同名 fn 体内构造集（AST 表达式位 + native 块 `$host.make` 正则扫描） |
+| 函数调用（`match parse_classify(raw)`） | 同上（fn 名解析） |
+| match 初始化（`let ev = match parse_extract(..) {Ok(e)=>e, Err(e)=>..}; match ev`） | 各臂体并集；`Ok(e) => e` 臂取被调函数的 **Ok 载荷变体集**（`Result::Ok(V)` 首参 / `$host.make("Result::Ok", [$host.make("V"...)` 正则） |
+| 复杂表达式 / 回溯超限（4 层） | 不可判定 → 空臂报 warning（宁报不漏） |
+
+臂变体 ∉ 可达集 → 穷尽性填充（不可达），不报；∈ 可达集 → error。
+
+**实测矩阵**：
+- 正控（三 SUT 现状）：Vigil / Curator / Gatemaster 全部通过 —— 所有填充臂
+  被可达集分析正确豁免（Curator 的 ExtractAbandoned 臂经 Ok 载荷流豁免；
+  Gatemaster 的 L1/L2/LadderExhausted 填充臂经 page_direct / force_exhaust
+  体内构造集豁免）。
+- RED 注入（#L-23 原始形态重现）：把 Gatemaster 案中死线臂改回空臂 →
+  G-9 error 精确命中（`守卫变体 DeadlineAlarm（边 budget -> ledger）出现在
+  空臂中……scrutinee 可达集：方法 status 体内构造集`），exit 1。
+- 负控（判定器可靠性）：三 SUT 的 5 处穷尽性填充臂全部正确不报
+  （v1 首版「直接报空臂」会把它们全部误报 —— 保守报 warning 的初版也在
+  Curator `match ev` 上翻车过一次：Ok 载荷流缺失 → 补 native 正则扫描修复）。
+
+**修复模式**（harness 作者侧）：
+- 挂边变体的臂执行与边目标一致的转移（Gatemaster 案中死线修复实录）；
+- 或重构为单变体构造 + 穷尽匹配习语（填充臂天然不可达，G-9 豁免）；
+- 计数型不变式按臂执行计数口径陈述（G-9 与不变式作者的契约）。
