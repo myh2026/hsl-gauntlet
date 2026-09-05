@@ -1,0 +1,97 @@
+# HSL 语言实战评估报告 —— 写一个 9 节点 / 17 边真实 Harness 的全程实录
+
+> 评估者立场：以「用户」身份从零编写 Vigil（SRE 告警分诊 harness，15 个模块 / ~1100 行 HSL / 27 个拓扑变异体 / 15 个测试场景），全程记录语言的真实表现。本文只记录**实测发生**的事，无推测。
+> 环境：dhv-ts v0.2.52（+ 本项目 Fixture v2 扩展），bun 1.3.14。
+
+---
+
+## 0. 总评
+
+| 维度 | 评分（5 分制） | 一句话 |
+|:---|:---:|:---|
+| 表达力（拓扑一等化） | 5.0 | graph/node/edge on Guard 把编排从代码里升出来，是整个 Gauntlet 方法论成立的前提 |
+| 静态严谨性 | 4.5 | S6 穷尽性 + G 规则在写作时**真的拦住我**（见 §3）；扣 0.5：别名通道曾有三处不一致（L-1/L-2） |
+| 语法舒适度 | 3.8 | Rust 风格的显式性对 harness 场景是净收益，但 String::from/clone 的仪式感在字符串密集域略重 |
+| 错误消息质量 | 4.5 | 中文 + 精确定位 + 错误码文化；match 臂的防御穷尽错误把我指向了正确的设计 |
+| 工具链完备度 | 4.0 | check/run/emit/watch 齐全；缺：多轨道剧本、故障注入（本项目已补）、测试框架层（Gauntlet 即此） |
+| 可测试性 | 5.0 | 事件总线 + 确定性剧本 = 我能对 17 条边逐一断言，这在 Python/TS harness 里做不到 |
+
+---
+
+## 1. 写作过程统计（诚实数据）
+
+- **首版 check 通过率**：11 个模块 503 行主图，语法层只错 1 处（match-scrutinee 的结构体字面量，见 §4.1），修 1 次后 `check` 即 0 error / 0 warning。
+- **到 15/15 场景全绿的迭代**：3 轮（fixture JSON 引号事故 ×1、f9 缺轨道 ×1、f11 故障序号错位 ×1——均为**用例侧**问题，非语言问题）。
+- **抓到的工具链 bug**：2 个（L-1 别名构造失败、L-2 别名臂绕过穷尽性检查）+ 1 个设计缺口（多轨道剧本缺失）——全部已修复并附回归用例，上游 113/113 绿。
+
+## 2. 语法舒适度实录
+
+### 2.1 拓扑声明：体验最好的部分
+
+```hsl
+graph Vigil(mut state: SessionState) -> Result<RunReport, HarnessError> {
+    node intake: AlertLog = AlertLog::new(state.inbox.clone())?;
+    node mut budget: Budget = Budget::zero();
+    edge budget -> router on BudgetSignal::Exhausted;
+    edge ledger -> intake on AdvanceSignal::Committed;
+```
+
+- `node mut` 存在且好用（预算计数顶点）；
+- `?` 在 node 初始化里可用——初始化失败即早退，语义干净；
+- 边声明的**纯声明性**（不改变控制流）起初让我警惕「装饰性语法」，但变异测试证明它**是契约**：删任何一条边都会被拓扑签名差分抓住（M1 全杀）。声明和行为（match 臂）分离 + G-7 lint 静态对齐，是这套设计真正自洽的地方。
+
+### 2.2 仪式感：Rust 基因的代价
+
+- `String::from("...")` 与 `.clone()` 密度高：HSL 文本密集（协议串、提示词、格式化），一个 503 行主图里有 60+ 处 String::from/clone。**但**这个代价买来了「值语义直觉」——我在整个 Vigil 里没有遇到一处意外的别名/共享可变状态（对照：写 JS 版 dsh 风格代码时这种事故是常态）。对 harness 这种「状态机正确性高于开发速度」的域，这是正确的取舍。
+- `for w in words { picked = w; break; }` 取首元素——`first()` 返回 Option 再 match 略啰嗦，循环+break 反而更顺（这是口味问题）。
+
+### 2.3 失败即值：harness 域的关键甜点
+
+工具层 `Result<ToolOutput, HarnessError>` 且 `ok=false` 携带错误语义（不抛异常），让降级路径成为**可 match 的枚举**（`Probe::EvidencePending/EvidenceFailed`）——「遥测挂了」从 try-catch 的栈展开变成拓扑上声明的转移。这是我为故障场景设计时最感激的语言决定。
+
+## 3. 静态严谨性实录（铁律真的咬人）
+
+写作中被检查器**实际拦截**的经历：
+
+1. **S6 循环内禁 `_` 通配**：我在预算耗尽降级路径上想用 `_ => {}` 兜掉 Probe 的两个不可达臂——被拒。被迫写显式防御臂后意识到：这正是「新变体 = 编译期处决」哲学的代价与收益——**上游词汇演化时我的防御臂会立刻变成编译错误**。Vigil 的降级构造 match 三臂中两臂标了「防御穷尽（S6 纪律）」注释。
+2. **G-2 端点先声明**：先写 edge 后写 node 的手误被精确指出行号。
+3. **S7 未使用绑定**：早期草稿里 `covered_note` 只写不读——警告（诚实但可关）。
+4. **S1 零隐式转换**：`"5".parse::<u32>()` 的显式 turbofish 让 Policy 装配的每处转换都有名字。
+
+## 4. 发现的工具链 bug（全部已修 + 回归锁定）
+
+### 4.1 [绕过] match-scrutinee 的结构体字面量需先绑定
+
+`match Probe::EvidenceFailed { reason: ... } { ... }` 解析失败（「期望 => 得到 :」）。与 Rust 一致的表达式歧义：scrutinee 处的 struct 字面量与 match 体花括号冲突。**绕过**：`let degraded = ...; match degraded {...}`。建议文档化（指南未提）。
+
+### 4.2 [L-1 已修复] import 别名：构造位与模式位解析不对称
+
+`import { Triage as TV }` 后：`TV::Variant{}` 构造报「无法解析的结构体字面量」（evalStructExpr 按原名查注册表），而 match 模式 `TV::Variant` 却因族校验守卫跳过而**宽松通过**——**同一个名字在两个位置一个炸一个过**，这是最危险的不对称（静默错误比崩溃更坏）。修复：link 期别名注册进类型注册表 + 三处构造位族名归一 + 模式位族名经注册表解析。上游 +2 回归用例（113/113）。
+
+### 4.3 [L-2 已修复] 别名臂完全绕过 S6 穷尽性
+
+checker 的 `pathPatternInfos` 以首段查 enums 注册表，别名首段未注册 → 别名臂被穷尽性统计忽略——「漏写 S::Square 变体」不会报错。修复：checkProgram 构建 enumAlias 映射。
+
+### 4.4 [设计缺口已补] 剧本单轨道
+
+dsh 时代 fixture 只有 acts/reviews 两轨。Vigil 需要 4 轨（inbox/triage/synthesize/review）+ inbox 环境轨道 → 实现了 `$host.fixture.next(track)` 多轨道 + left()。**零破坏**（dsh 回归绿）。
+
+### 4.5 [记录] 故障注入的序号脆性
+
+`(target, nth)` 定位使注入点依赖内部调用次序（f11 实录：json.fields 第 1 次调用属 parse_alert_line 而非 parse_triage——打偏了）。已记录为已知局限；改进方向：按调用点命名（如 `json.fields@parse_triage`）。这本身是 Gauntlet 实测出来的方法论教训。
+
+### 4.6 [观察] 边发射的变体名匹配口径
+
+`traceEdgeFire` 按守卫**变体名**（路径末段）匹配 match 臂与边声明 → 同名变体会同时发射多条边（别名）。这不是 bug 而是实现口径，但直接催生 **G-8 唯一守卫纪律**（Vigil 17 边 17 个互异变体名）——语言实现细节反向塑造了写作纪律，这条链路值得写进论文。
+
+## 5. 与直接写 Python/TS 的对照（主观但基于实录）
+
+写 Vigil 的每一处「语言帮我拦住的错误」（S6 防御臂、G-2 次序、别名炸点显式化）在 Python 版 harness 里都会是**运行期才暴露**的静默行为差异。反过来，我在 Python 里 5 分钟能写的字符串拼接，HSL 要 8 分钟。**结论**：harness 是状态机正确性密集的域，值得用编译期纪律换运行期确定性——尤其当测试（Gauntlet）能在拓扑层建立判据时，显式性直接变现为可测性。
+
+## 6. 给语言作者的改进清单（按优先级）
+
+1. match-scrutinee struct 字面量：文档化（或自动包一层括号语义）；
+2. 别名通道：继续审计 emit/sync/backends 是否存在第三处不对称（L-1 只修了 check/run 路径）；
+3. 剧本轨道：把 inbox 这类「环境轨道」与「模型轨道」在文档上分层（Gauntlet 已实践：环境 = workspace 文件 + 环境轨道，模型 = 角色轨道）；
+4. `first()`/`nth()` 等 Vec 便捷方法与 Option 的糖（`unwrap_or` 已很好用）；
+5. 故障注入进 BNF 附录（宿主 ABI 的 fault 命名空间），避免方言化。

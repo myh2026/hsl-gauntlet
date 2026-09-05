@@ -1,0 +1,14 @@
+{
+  "name": "hsl-gauntlet",
+  "version": "1.0.0",
+  "description": "Topology-grounded conformance testing, fault injection & mutation analysis for HSL agent harnesses — SUT: Vigil",
+  "license": "MIT",
+  "scripts": {
+    "check": "bun vendor/dhv-ts/src/main.ts check subject/vigil/vigil.hsl",
+    "topo": "bun gauntlet/cli.ts topo",
+    "lint": "bun gauntlet/cli.ts lint",
+    "run": "bun gauntlet/cli.ts run",
+    "mutate": "bun gauntlet/cli.ts mutate",
+    "all": "bash scripts/run-all.sh"
+  }
+}
